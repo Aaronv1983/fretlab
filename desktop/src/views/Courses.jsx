@@ -9,24 +9,28 @@ export default function Courses({ go }) {
   const st = useStore();
   return (
     <div className="fl-scroll" style={{ height: '100%', overflowY: 'auto', background: T.bg }}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div className="fl-page" style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
         {st.courses.map((course) => (
-          <div key={course.id} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div style={{ ...sys(20, 800), color: T.text, padding: '16px 16px 0', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ width: 8, height: 8, borderRadius: 4, background: courseColor(course.level) }} />
-              {LEVEL_NAME[course.level]} Course
+          <div key={course.id} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
+              <div style={{ ...sys(22, 800), color: T.text, display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ width: 10, height: 10, borderRadius: 5, background: courseColor(course.level) }} />
+                {LEVEL_NAME[course.level]} Course
+              </div>
+              <span style={{ ...mono(11), color: T.textMuted }}>{course.routines.filter((x) => st.isRoutineMastered(x.id)).length}/{course.routines.length} mastered</span>
             </div>
+            <div className="fl-grid-cards">
             {course.routines.map((routine) => {
               const isMastered = st.isRoutineMastered(routine.id);
               const isUnlocked = st.isRoutineUnlocked(routine.id);
               const isCurrent = st.currentRoutine?.id === routine.id;
               const dot = isCurrent ? 22 : isMastered ? 18 : 14;
               return (
-                <div key={routine.id} style={{ padding: '0 16px' }}>
+                <div key={routine.id} style={{ display: 'flex' }}>
                   <div className={isUnlocked && !isCurrent ? 'fl-press' : ''}
                     onClick={() => { if (isUnlocked && !isCurrent) { st.setCurrentRoutineId(routine.id); go('home'); } }}
                     style={{
-                      display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
+                      flex: 1, display: 'flex', alignItems: 'center', gap: 12, padding: '16px 18px',
                       background: isCurrent ? T.accentSoft : T.card, borderRadius: 12,
                       border: `1px solid ${isCurrent ? 'rgba(255,107,53,0.25)' : T.border}`,
                       opacity: isUnlocked ? 1 : 0.35, cursor: isUnlocked && !isCurrent ? 'pointer' : 'default',
@@ -58,9 +62,9 @@ export default function Courses({ go }) {
                 </div>
               );
             })}
+            </div>
           </div>
         ))}
-        <div style={{ height: 100 }} />
       </div>
     </div>
   );

@@ -58,8 +58,8 @@ export default function Checkpoint({ go }) {
   const mcBorder = (i) => (!answered ? T.border : i === q.correctIndex ? 'rgba(52,211,153,0.5)' : i === selected ? 'rgba(248,113,113,0.4)' : T.border);
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: T.bg }}>
-      <div style={{ display: 'flex', alignItems: 'center', padding: '12px 20px' }}>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: T.bg, maxWidth: 820, margin: '0 auto' }}>
+      <div style={{ display: 'flex', alignItems: 'center', padding: '24px 20px 16px' }}>
         <button className="fl-link" onClick={() => go('practice')} style={{ display: 'flex', alignItems: 'center', gap: 4, color: T.textSecondary, ...sys(13) }}>
           <Icon name="chevronLeft" size={12} /> Back
         </button>
@@ -79,13 +79,13 @@ export default function Checkpoint({ go }) {
             </div>
           ) : q.type === 'multipleChoice' && q.options ? (
             <>
-              <div style={{ ...sys(19, 700), color: T.text, textAlign: 'center', padding: '0 20px' }}>{q.question}</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '0 20px' }}>
+              <div style={{ ...sys(24, 800), color: T.text, textAlign: 'center', padding: '16px 20px 8px', lineHeight: 1.3 }}>{q.question}</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '0 20px' }}>
                 {q.options.map((opt, i) => (
                   <button key={i} disabled={answered} onClick={() => onMC(i, q)} className={answered ? '' : 'fl-press'}
-                    style={{ display: 'flex', alignItems: 'center', padding: '14px 18px', background: mcBg(i), borderRadius: 12, border: `1px solid ${mcBorder(i)}`, cursor: answered ? 'default' : 'pointer', textAlign: 'left' }}>
-                    <span style={{ ...mono(11), color: T.textMuted, paddingRight: 8 }}>{String.fromCharCode(65 + i)}</span>
-                    <span style={{ ...sys(15, 600), color: mcColor(i) }}>{opt}</span>
+                    style={{ display: 'flex', alignItems: 'center', padding: '20px 22px', background: mcBg(i), borderRadius: 12, border: `1px solid ${mcBorder(i)}`, cursor: answered ? 'default' : 'pointer', textAlign: 'left' }}>
+                    <span style={{ ...mono(12), color: T.textMuted, paddingRight: 14 }}>{String.fromCharCode(65 + i)}</span>
+                    <span style={{ ...sys(17, 600), color: mcColor(i) }}>{opt}</span>
                   </button>
                 ))}
               </div>
@@ -96,7 +96,7 @@ export default function Checkpoint({ go }) {
               <button className="fl-btn" onClick={() => {
                 if (currentQ < questions.length - 1) { setCurrentQ(currentQ + 1); setSelected(null); setAnswered(false); startTime.current = Date.now(); }
                 else setShowResults(true);
-              }} style={{ width: '100%', ...mono(14, 700), color: '#fff', background: T.accent, padding: '13px 0', borderRadius: 12 }}>
+              }} style={{ width: '100%', ...mono(15, 700), color: '#fff', background: T.accent, padding: '16px 0', borderRadius: 12 }}>
                 {currentQ < questions.length - 1 ? 'Next Question →' : 'See Results'}
               </button>
             </div>
@@ -132,10 +132,10 @@ function Results({ st, questions, score, go, onReset }) {
 
   return (
     <div className="fl-scroll" style={{ height: '100%', overflowY: 'auto', background: T.bg }}>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, paddingTop: 40 }}>
-        <Icon name={passed ? 'trophy' : 'rotate'} size={48} color={passed ? T.yellow : T.accent} strokeWidth={passed ? 2 : 2.4} />
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 18, paddingTop: 56, maxWidth: 640, margin: '0 auto' }}>
+        <Icon name={passed ? 'trophy' : 'rotate'} size={64} color={passed ? T.yellow : T.accent} strokeWidth={passed ? 2 : 2.4} />
         <div style={{ ...sys(24, 800), color: T.text }}>{passed ? 'Checkpoint Passed!' : 'Keep Practicing!'}</div>
-        <div style={{ ...mono(48, 800), color: passed ? T.green : T.yellow }}>{pct}%</div>
+        <div style={{ ...mono(56, 800), color: passed ? T.green : T.yellow }}>{pct}%</div>
         <div style={{ ...sys(14), color: T.textSecondary }}>{score}/{questions.length} correct</div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center', padding: '0 16px' }}>
           {gains.map(([k, label]) => (
@@ -157,7 +157,7 @@ function Results({ st, questions, score, go, onReset }) {
           ))}
         </div>
         <button className="fl-btn" onClick={done} style={{ ...mono(15, 700), color: '#fff', background: T.accent, padding: '14px 40px', borderRadius: 14 }}>Done for Today</button>
-        <div style={{ height: 100 }} />
+        <div style={{ height: 48 }} />
       </div>
     </div>
   );

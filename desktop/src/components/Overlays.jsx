@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import { T, SANS, sys } from '../theme.js';
 
 // .sheet { NavigationView { ... } } — slides up over the app, with a nav bar
-export function Sheet({ open, onClose, title, leading, trailing, children }) {
+export function Sheet({ open, onClose, title, leading, trailing, children, wide }) {
   useEffect(() => {
     if (!open) return;
     const onKey = (e) => { if (e.key === 'Escape') onClose(); };
@@ -14,9 +14,8 @@ export function Sheet({ open, onClose, title, leading, trailing, children }) {
   if (!open) return null;
   return createPortal(
     <div className="fl-sheet-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="fl-sheet">
-        <div className="fl-grabber" />
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', padding: '8px 16px 10px', minHeight: 40 }}>
+      <div className={`fl-sheet${wide ? ' wide' : ''}`}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', padding: '12px 18px', minHeight: 52, borderBottom: `1px solid ${T.border}` }}>
           <div style={{ justifySelf: 'start' }}>{leading}</div>
           <div style={{ ...sys(16, 600), color: T.text }}>{title || ''}</div>
           <div style={{ justifySelf: 'end' }}>{trailing}</div>
@@ -24,7 +23,7 @@ export function Sheet({ open, onClose, title, leading, trailing, children }) {
         <div className="fl-scroll" style={{ flex: 1, overflowY: 'auto' }}>{children}</div>
       </div>
     </div>,
-    document.getElementById('fl-phone') || document.body,
+    document.getElementById('fl-app') || document.body,
   );
 }
 
@@ -60,6 +59,6 @@ export function Alert({ open, title, message, buttons, onClose }) {
         </div>
       </div>
     </div>,
-    document.getElementById('fl-phone') || document.body,
+    document.getElementById('fl-app') || document.body,
   );
 }

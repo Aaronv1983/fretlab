@@ -63,14 +63,17 @@ export default function Woodshed() {
   );
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: T.bg }}>
-      <div style={{ display: 'flex', alignItems: 'center', padding: '16px 20px 8px' }}>
-        <div style={{ ...sys(22, 800), color: T.text, flex: 1 }}>Solo Woodshed</div>
-        <button className="fl-btn" onClick={() => setShowNew(true)} style={{ background: 'none', padding: 0 }}><Icon name="plusCircleFill" size={24} color={T.accent} /></button>
+    <div className="fl-scroll" style={{ height: '100%', overflowY: 'auto', background: T.bg }}>
+      <div className="fl-page">
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 18 }}>
+        <div style={{ ...sys(26, 800), color: T.text }}>Solo Woodshed</div>
+        <div style={{ display: 'flex', width: 340, background: T.card, borderRadius: 12, padding: 4, border: `1px solid ${T.border}` }}>{seg('My Solos', 0)}{seg('Lick Library', 1)}</div>
+        <div style={{ flex: 1 }} />
+        <button className="fl-btn" onClick={() => setShowNew(true)} style={{ display: 'flex', alignItems: 'center', gap: 8, ...mono(12, 700), color: T.accent, background: T.accentSoft, padding: '9px 14px', borderRadius: 10 }}>
+          <Icon name="plusCircleFill" size={16} color={T.accent} /> New Solo
+        </button>
       </div>
-      <div style={{ display: 'flex', padding: '0 16px 12px' }}>{seg('My Solos', 0)}{seg('Lick Library', 1)}</div>
-      <div className="fl-scroll" style={{ flex: 1, overflowY: 'auto' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '0 16px' }}>
+        <div className={(tab === 0 ? st.projects.length : st.lickLibrary.length) ? 'fl-grid-cards' : ''} style={{ gap: 14 }}>
           {tab === 0 ? (
             st.projects.length === 0 ? (
               <Empty icon="listMusic" title="No solos yet" text="Take a photo of guitar tab to start learning a solo in chunks">
@@ -83,7 +86,6 @@ export default function Woodshed() {
             <Empty icon="heartText" title="No saved licks yet" text="Favorite chunks from your solos to build your personal lick library" />
           ) : st.lickLibrary.map((l) => <LickCard key={l.id} lick={l} />)}
         </div>
-        <div style={{ height: 100 }} />
       </div>
       <NewProjectSheet open={showNew} onClose={() => setShowNew(false)} />
     </div>
@@ -92,10 +94,10 @@ export default function Woodshed() {
 
 function Empty({ icon, title, text, children }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, paddingTop: 40 }}>
-      <Icon name={icon} size={44} color={T.textMuted} />
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, paddingTop: 80 }}>
+      <Icon name={icon} size={56} color={T.textMuted} />
       <div style={{ ...sys(18, 700), color: T.text }}>{title}</div>
-      <div style={{ ...sys(13), color: T.textSecondary, textAlign: 'center', padding: '0 40px' }}>{text}</div>
+      <div style={{ ...sys(13), color: T.textSecondary, textAlign: 'center', maxWidth: 420 }}>{text}</div>
       {children}
     </div>
   );
@@ -105,7 +107,7 @@ function ProjectCard({ p, onOpen }) {
   const [dName, dColor] = DIFF[p.difficulty];
   const mastered = p.chunks.filter((c) => c.isMastered).length;
   return (
-    <div className="fl-press" onClick={onOpen} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: 14, background: T.card, borderRadius: 14, border: `1px solid ${T.border}`, cursor: 'pointer' }}>
+    <div className="fl-press" onClick={onOpen} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: 18, background: T.card, borderRadius: 14, border: `1px solid ${T.border}`, cursor: 'pointer' }}>
       <MasteryRing value={p.overallMastery} size={50} width={4} color={dColor} fontSize={10} />
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
         <div style={{ ...sys(15, 700), color: T.text }}>{p.title}</div>
@@ -262,15 +264,16 @@ function SoloDetail({ project, onBack }) {
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: T.bg }}>
       {/* Navigation bar (inline title) */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', padding: '10px 12px', borderBottom: `1px solid ${T.border}` }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', padding: '14px 28px', borderBottom: `1px solid ${T.border}` }}>
         <button className="fl-link" onClick={onBack} style={{ justifySelf: 'start', display: 'flex', alignItems: 'center', gap: 2, color: '#0A84FF', ...sys(16) }}>
           <Icon name="chevronLeft" size={20} color="#0A84FF" strokeWidth={2.5} /> Back
         </button>
-        <div style={{ ...sys(16, 600), color: T.text, maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{project.title}</div>
+        <div style={{ ...sys(17, 700), color: T.text, maxWidth: 520, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{project.title}</div>
         <div />
       </div>
       <div className="fl-scroll" style={{ flex: 1, overflowY: 'auto' }}>
-        <div style={{ padding: '16px 16px 0', display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div className="fl-page" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1.2fr)', gap: 28, alignItems: 'start' }}>
+         <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
             <MasteryRing value={project.overallMastery} size={60} width={5} color={T.accent} fontSize={14} />
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -312,10 +315,10 @@ function SoloDetail({ project, onBack }) {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <div style={{ ...mono(10, 700), color: T.textMuted, letterSpacing: 1 }}>CHUNKS</div>
-            <div className="fl-hscroll" style={{ display: 'flex', gap: 6, overflowX: 'auto' }}>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               {project.chunks.map((c, i) => (
                 <div key={c.id} onClick={() => setIdx(i)} style={{
-                  width: 44, height: 44, flexShrink: 0, borderRadius: 10, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4,
+                  width: 56, height: 56, flexShrink: 0, borderRadius: 10, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4,
                   background: idx === i ? T.accentSoft : c.isMastered ? T.greenSoft : T.card,
                   border: `1px solid ${idx === i ? alpha(T.accent, 0.4) : c.isMastered ? alpha(T.green, 0.3) : T.border}`,
                 }}>
@@ -326,14 +329,15 @@ function SoloDetail({ project, onBack }) {
             </div>
           </div>
 
+         </div>
           {chunk && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14, padding: 22, background: T.card, borderRadius: 16, border: `1px solid ${T.border}` }}>
               <div style={{ display: 'flex', alignItems: 'center' }}>
-                <span style={{ ...sys(16, 700), color: T.text, flex: 1 }}>{chunk.label}</span>
+                <span style={{ ...sys(20, 800), color: T.text, flex: 1 }}>{chunk.label}</span>
                 <div style={{ display: 'flex', gap: 4 }}>{chunk.techniques.slice(0, 3).map((t) => <Icon key={t} name={TECH[t]?.[1]} size={10} color={TECH[t]?.[2]} />)}</div>
               </div>
-              <div className="fl-hscroll" style={{ padding: 12, background: 'rgba(255,255,255,0.02)', borderRadius: 10, border: `1px solid ${T.border}`, overflowX: 'auto' }}>
-                {chunk.tabLines.map((line, i) => <div key={i} style={{ ...mono(11), color: T.textSecondary, whiteSpace: 'pre', minHeight: '1.25em' }}>{line}</div>)}
+              <div className="fl-hscroll" style={{ padding: 18, background: 'rgba(255,255,255,0.02)', borderRadius: 10, border: `1px solid ${T.border}`, overflowX: 'auto' }}>
+                {chunk.tabLines.map((line, i) => <div key={i} style={{ ...mono(15), color: T.text, whiteSpace: 'pre', minHeight: '1.3em', lineHeight: 1.3 }}>{line}</div>)}
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -365,7 +369,6 @@ function SoloDetail({ project, onBack }) {
             </div>
           )}
         </div>
-        <div style={{ height: 100 }} />
       </div>
     </div>
   );

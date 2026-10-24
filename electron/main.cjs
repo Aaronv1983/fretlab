@@ -62,10 +62,10 @@ function setPermissions() {
 
 function createWindow() {
   win = new BrowserWindow({
-    width: 440,
-    height: 940,
-    minWidth: 380,
-    minHeight: 600,
+    width: 1280,
+    height: 840,
+    minWidth: 1024,
+    minHeight: 680,
     backgroundColor: '#0A0A0B',
     title: 'FRETLAB',
     icon: path.join(__dirname, '..', 'build', 'icon.ico'),

@@ -61,13 +61,16 @@ export default function ScaleLibrary() {
   const selected = st.allScales.find((s) => s.id === selectedId) || null;
 
   return (
-    <div style={{ background: T.bg, display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <div style={{ display: 'flex', alignItems: 'center', padding: '16px 20px 0' }}>
-        <div style={{ ...sys(22, 800), color: T.text, flex: 1 }}>Scale Library</div>
-        <button className="fl-btn" onClick={() => setShowAdd(true)} style={{ background: 'none', padding: 0 }}><Icon name="plusCircleFill" size={22} color={T.accent} /></button>
+    <div className="fl-page" style={{ background: T.bg, display: 'flex', flexDirection: 'column', gap: 18 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ ...sys(26, 800), color: T.text }}>Scale Library</div>
+        <span style={{ ...mono(11), color: T.textMuted, flex: 1 }}>{st.allScales.length} scales</span>
+        <button className="fl-btn" onClick={() => setShowAdd(true)} style={{ display: 'flex', alignItems: 'center', gap: 8, ...mono(12, 700), color: T.accent, background: T.accentSoft, padding: '9px 14px', borderRadius: 10 }}>
+          <Icon name="plusCircleFill" size={16} color={T.accent} /> Custom Scale
+        </button>
       </div>
 
-      <div className="fl-hscroll" style={{ display: 'flex', gap: 6, overflowX: 'auto', padding: '0 16px' }}>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         {CATEGORIES.map(([id, label, color]) => (
           <div key={id} onClick={() => { setCategory(id); setSelectedId(null); }} style={{
             ...mono(11, 700), whiteSpace: 'nowrap', flexShrink: 0, cursor: 'pointer', padding: '7px 14px', borderRadius: 999,
@@ -77,7 +80,9 @@ export default function ScaleLibrary() {
         ))}
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '0 16px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(320px, 420px) minmax(0, 1fr)', gap: 24, alignItems: 'start' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {scales.length === 0 && <div style={{ ...sys(13), color: T.textMuted, padding: 20 }}>No scales in this category yet.</div>}
         {scales.map((s) => {
           const color = catColor(s.category);
           const sel = selectedId === s.id;
@@ -98,16 +103,23 @@ export default function ScaleLibrary() {
         })}
       </div>
 
+      <div style={{ position: 'sticky', top: 16 }}>
+      {!selected && (
+        <div style={{ padding: 40, background: T.card, borderRadius: 14, border: `1px dashed ${T.border}`, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+          <Icon name="music" size={32} color={T.textMuted} />
+          <div style={{ ...sys(14, 600), color: T.textSecondary }}>Select a scale to see its notes and fretboard</div>
+        </div>
+      )}
       {selected && (
-        <div style={{ margin: '0 16px', padding: 16, background: T.card, borderRadius: 14, border: `1px solid ${T.border}`, display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div style={{ padding: 20, background: T.card, borderRadius: 14, border: `1px solid ${T.border}`, display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div style={{ ...sys(13), color: T.textSecondary, lineHeight: 1.5 }}>{selected.description}</div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <div style={{ ...mono(9, 700), color: T.textMuted, letterSpacing: 1 }}>ROOT NOTE</div>
-            <div className="fl-hscroll" style={{ display: 'flex', gap: 5, overflowX: 'auto' }}>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               {ALL_NOTES.map((n) => (
                 <div key={n} onClick={() => setRoot(n)} style={{
-                  width: 36, height: 32, flexShrink: 0, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+                  width: 42, height: 36, flexShrink: 0, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
                   ...mono(12, 700), color: root === n ? '#fff' : T.textSecondary, background: root === n ? T.accent : T.card, border: `1px solid ${T.border}`,
                 }}>{n}</div>
               ))}
@@ -154,7 +166,8 @@ export default function ScaleLibrary() {
           </div>
         </div>
       )}
-      <div style={{ height: 100 }} />
+      </div>
+      </div>
 
       <AddCustomScaleSheet open={showAdd} onClose={() => setShowAdd(false)} onSave={(s) => { st.addCustomScale(s); setShowAdd(false); }} />
     </div>

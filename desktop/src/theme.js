@@ -33,9 +33,12 @@ export const T = {
 export const MONO = "ui-monospace, 'SF Mono', 'Cascadia Mono', 'Cascadia Code', Consolas, 'Courier New', monospace";
 export const SANS = "-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif";
 
+// Desktop text scale (iOS point sizes read small at desktop viewing distance)
+export const UI_SCALE = 1.15;
+
 // FLTheme.mono(size, weight)
-export const mono = (size, weight = 400) => ({ fontFamily: MONO, fontSize: size, fontWeight: weight });
-export const sys = (size, weight = 400) => ({ fontFamily: SANS, fontSize: size, fontWeight: weight });
+export const mono = (size, weight = 400) => ({ fontFamily: MONO, fontSize: Math.round(size * UI_SCALE * 10) / 10, fontWeight: weight });
+export const sys = (size, weight = 400) => ({ fontFamily: SANS, fontSize: Math.round(size * UI_SCALE * 10) / 10, fontWeight: weight });
 
 // SwiftUI Font.Weight → CSS
 export const W = { regular: 400, medium: 500, semibold: 600, bold: 700, heavy: 800, light: 300 };
