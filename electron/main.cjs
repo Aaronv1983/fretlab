@@ -1,6 +1,6 @@
 // FRETLAB desktop shell (Electron main process)
 // Serves the Vite build from a privileged app:// origin so localStorage persists
-// between launches and getUserMedia (Tuner / Key Finder) runs in a secure context.
+// between launches and the app runs in a secure context (Web Audio metronome).
 
 const { app, BrowserWindow, protocol, net, session, shell, Menu } = require('electron');
 const path = require('node:path');
@@ -8,7 +8,7 @@ const { pathToFileURL } = require('node:url');
 
 const SCHEME = 'app';
 const HOST = 'fretlab';
-const DIST = path.join(__dirname, '..', 'dist');
+const DIST = path.join(__dirname, '..', 'dist-desktop');
 const APP_URL = `${SCHEME}://${HOST}/index.html`;
 
 // Must run before app ready
@@ -62,9 +62,9 @@ function setPermissions() {
 
 function createWindow() {
   win = new BrowserWindow({
-    width: 520,
+    width: 440,
     height: 940,
-    minWidth: 400,
+    minWidth: 380,
     minHeight: 600,
     backgroundColor: '#0A0A0B',
     title: 'FRETLAB',

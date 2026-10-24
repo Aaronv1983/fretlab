@@ -14,11 +14,11 @@ module.exports = {
   copyright: 'Copyright © 2026 Aaron Visocnik',
   directories: { output: 'release', buildResources: 'build' },
   files: [
-    'dist/**/*',
+    'dist-desktop/**/*',
     'electron/**/*',
     'build/icon.ico',
     'package.json',
-    '!**/node_modules/**', // React is already bundled into dist by Vite
+    '!**/node_modules/**', // everything is bundled into dist-desktop by Vite
   ],
   asar: true,
   win: {

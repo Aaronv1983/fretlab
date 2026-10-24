@@ -1,0 +1,562 @@
+[
+ {
+  "id": "major",
+  "name": "Major (Ionian)",
+  "category": "major",
+  "intervals": [
+   0,
+   2,
+   4,
+   5,
+   7,
+   9,
+   11
+  ],
+  "degreeNames": [
+   "R",
+   "2",
+   "3",
+   "4",
+   "5",
+   "6",
+   "7"
+  ],
+  "description": "The foundation of Western music. Bright, happy sound.",
+  "genre": "All",
+  "mood": "Bright & Happy",
+  "isCustom": false,
+  "fretPattern": null
+ },
+ {
+  "id": "natural-minor",
+  "name": "Natural Minor (Aeolian)",
+  "category": "minor",
+  "intervals": [
+   0,
+   2,
+   3,
+   5,
+   7,
+   8,
+   10
+  ],
+  "degreeNames": [
+   "R",
+   "2",
+   "b3",
+   "4",
+   "5",
+   "b6",
+   "b7"
+  ],
+  "description": "The default minor sound. Dark, melancholic.",
+  "genre": "All",
+  "mood": "Dark & Sad",
+  "isCustom": false,
+  "fretPattern": null
+ },
+ {
+  "id": "harmonic-minor",
+  "name": "Harmonic Minor",
+  "category": "minor",
+  "intervals": [
+   0,
+   2,
+   3,
+   5,
+   7,
+   8,
+   11
+  ],
+  "degreeNames": [
+   "R",
+   "2",
+   "b3",
+   "4",
+   "5",
+   "b6",
+   "7"
+  ],
+  "description": "Natural minor with raised 7th. Creates strong V-i resolution. Exotic, Middle Eastern flavor.",
+  "genre": "Classical, Metal, Flamenco",
+  "mood": "Exotic & Dramatic",
+  "isCustom": false,
+  "fretPattern": null
+ },
+ {
+  "id": "melodic-minor",
+  "name": "Melodic Minor",
+  "category": "minor",
+  "intervals": [
+   0,
+   2,
+   3,
+   5,
+   7,
+   9,
+   11
+  ],
+  "degreeNames": [
+   "R",
+   "2",
+   "b3",
+   "4",
+   "5",
+   "6",
+   "7"
+  ],
+  "description": "Minor with raised 6th and 7th. Smooth, jazz-friendly.",
+  "genre": "Jazz, Fusion",
+  "mood": "Smooth & Sophisticated",
+  "isCustom": false,
+  "fretPattern": null
+ },
+ {
+  "id": "major-pent",
+  "name": "Major Pentatonic",
+  "category": "pentatonic",
+  "intervals": [
+   0,
+   2,
+   4,
+   7,
+   9
+  ],
+  "degreeNames": [
+   "R",
+   "2",
+   "3",
+   "5",
+   "6"
+  ],
+  "description": "5-note major scale. No wrong notes. Country, rock, pop.",
+  "genre": "Country, Rock, Pop",
+  "mood": "Bright & Safe",
+  "isCustom": false,
+  "fretPattern": null
+ },
+ {
+  "id": "minor-pent",
+  "name": "Minor Pentatonic",
+  "category": "pentatonic",
+  "intervals": [
+   0,
+   3,
+   5,
+   7,
+   10
+  ],
+  "degreeNames": [
+   "R",
+   "b3",
+   "4",
+   "5",
+   "b7"
+  ],
+  "description": "THE rock/blues scale. Every guitarist's first soloing tool.",
+  "genre": "Rock, Blues, Metal",
+  "mood": "Bluesy & Powerful",
+  "isCustom": false,
+  "fretPattern": "5-8 | 5-7 | 5-7 | 5-7 | 5-8 | 5-8"
+ },
+ {
+  "id": "blues",
+  "name": "Blues Scale",
+  "category": "blues",
+  "intervals": [
+   0,
+   3,
+   5,
+   6,
+   7,
+   10
+  ],
+  "degreeNames": [
+   "R",
+   "b3",
+   "4",
+   "b5",
+   "5",
+   "b7"
+  ],
+  "description": "Minor pentatonic + the blue note (b5). Gritty, expressive.",
+  "genre": "Blues, Rock",
+  "mood": "Gritty & Soulful",
+  "isCustom": false,
+  "fretPattern": null
+ },
+ {
+  "id": "major-blues",
+  "name": "Major Blues Scale",
+  "category": "blues",
+  "intervals": [
+   0,
+   2,
+   3,
+   4,
+   7,
+   9
+  ],
+  "degreeNames": [
+   "R",
+   "2",
+   "b3",
+   "3",
+   "5",
+   "6"
+  ],
+  "description": "Major pentatonic + b3. Sweet and soulful.",
+  "genre": "Blues, Country, Gospel",
+  "mood": "Sweet & Soulful",
+  "isCustom": false,
+  "fretPattern": null
+ },
+ {
+  "id": "dorian",
+  "name": "Dorian",
+  "category": "modes",
+  "intervals": [
+   0,
+   2,
+   3,
+   5,
+   7,
+   9,
+   10
+  ],
+  "degreeNames": [
+   "R",
+   "2",
+   "b3",
+   "4",
+   "5",
+   "6",
+   "b7"
+  ],
+  "description": "Minor with a bright 6th. Funky, soulful, versatile.",
+  "genre": "Funk, Jazz, Rock",
+  "mood": "Cool & Funky",
+  "isCustom": false,
+  "fretPattern": null
+ },
+ {
+  "id": "mixolydian",
+  "name": "Mixolydian",
+  "category": "modes",
+  "intervals": [
+   0,
+   2,
+   4,
+   5,
+   7,
+   9,
+   10
+  ],
+  "degreeNames": [
+   "R",
+   "2",
+   "3",
+   "4",
+   "5",
+   "6",
+   "b7"
+  ],
+  "description": "Major with b7. Bluesy, dominant. Classic rock sound.",
+  "genre": "Rock, Blues, Country",
+  "mood": "Bluesy & Bright",
+  "isCustom": false,
+  "fretPattern": null
+ },
+ {
+  "id": "lydian",
+  "name": "Lydian",
+  "category": "modes",
+  "intervals": [
+   0,
+   2,
+   4,
+   6,
+   7,
+   9,
+   11
+  ],
+  "degreeNames": [
+   "R",
+   "2",
+   "3",
+   "#4",
+   "5",
+   "6",
+   "7"
+  ],
+  "description": "Major with raised 4th. Dreamy, floating, ethereal.",
+  "genre": "Progressive, Film Score",
+  "mood": "Dreamy & Floating",
+  "isCustom": false,
+  "fretPattern": null
+ },
+ {
+  "id": "phrygian",
+  "name": "Phrygian",
+  "category": "metal",
+  "intervals": [
+   0,
+   1,
+   3,
+   5,
+   7,
+   8,
+   10
+  ],
+  "degreeNames": [
+   "R",
+   "b2",
+   "b3",
+   "4",
+   "5",
+   "b6",
+   "b7"
+  ],
+  "description": "The metalcore scale. That 0-1-3 half step from root creates the dark, aggressive sound. The b2 is the signature — one fret above the root. Used by Architects, Parkway Drive, August Burns Red. Also the sound of flamenco and Middle Eastern music.",
+  "genre": "Metalcore, Djent, Flamenco",
+  "mood": "Dark & Aggressive",
+  "isCustom": false,
+  "fretPattern": "5-6-8 | 5-7-8 | 5-7 | 5-7 | 5-6-8 | 5-6-8"
+ },
+ {
+  "id": "phrygian-dominant",
+  "name": "Phrygian Dominant",
+  "category": "metal",
+  "intervals": [
+   0,
+   1,
+   4,
+   5,
+   7,
+   8,
+   10
+  ],
+  "degreeNames": [
+   "R",
+   "b2",
+   "3",
+   "4",
+   "5",
+   "b6",
+   "b7"
+  ],
+  "description": "Phrygian with a major 3rd. Even more exotic. The augmented 2nd between b2 and 3 creates an Arabic/Spanish sound. Used for heavy breakdowns with a Middle Eastern twist.",
+  "genre": "Metal, Flamenco, Arabic",
+  "mood": "Exotic & Heavy",
+  "isCustom": false,
+  "fretPattern": "5-6-9 | 5-7-8 | 5-7 | 5-7 | 5-6-8 | 5-6-9"
+ },
+ {
+  "id": "locrian",
+  "name": "Locrian",
+  "category": "metal",
+  "intervals": [
+   0,
+   1,
+   3,
+   5,
+   6,
+   8,
+   10
+  ],
+  "degreeNames": [
+   "R",
+   "b2",
+   "b3",
+   "4",
+   "b5",
+   "b6",
+   "b7"
+  ],
+  "description": "The darkest mode. Has a b5 which makes even the root chord diminished. Maximum dissonance. Used in extreme metal and djent.",
+  "genre": "Death Metal, Djent",
+  "mood": "Extremely Dark & Unstable",
+  "isCustom": false,
+  "fretPattern": null
+ },
+ {
+  "id": "whole-half-dim",
+  "name": "Whole-Half Diminished",
+  "category": "metal",
+  "intervals": [
+   0,
+   2,
+   3,
+   5,
+   6,
+   8,
+   9,
+   11
+  ],
+  "degreeNames": [
+   "R",
+   "2",
+   "b3",
+   "4",
+   "b5",
+   "b6",
+   "6",
+   "7"
+  ],
+  "description": "8-note symmetrical scale alternating whole and half steps. Creates a disorienting, evil sound. Used in tech death metal and jazz fusion.",
+  "genre": "Tech Metal, Jazz Fusion",
+  "mood": "Disorienting & Evil",
+  "isCustom": false,
+  "fretPattern": null
+ },
+ {
+  "id": "half-whole-dim",
+  "name": "Half-Whole Diminished",
+  "category": "metal",
+  "intervals": [
+   0,
+   1,
+   3,
+   4,
+   6,
+   7,
+   9,
+   10
+  ],
+  "degreeNames": [
+   "R",
+   "b2",
+   "b3",
+   "3",
+   "b5",
+   "5",
+   "6",
+   "b7"
+  ],
+  "description": "The dominant diminished scale. Alternates half-whole. Used over dominant 7th chords for an 'outside' sound.",
+  "genre": "Jazz, Fusion, Metal",
+  "mood": "Tense & Outside",
+  "isCustom": false,
+  "fretPattern": null
+ },
+ {
+  "id": "hungarian-minor",
+  "name": "Hungarian Minor",
+  "category": "exotic",
+  "intervals": [
+   0,
+   2,
+   3,
+   6,
+   7,
+   8,
+   11
+  ],
+  "degreeNames": [
+   "R",
+   "2",
+   "b3",
+   "#4",
+   "5",
+   "b6",
+   "7"
+  ],
+  "description": "Harmonic minor with a raised 4th. Two augmented 2nd intervals create a deeply exotic, Eastern European sound.",
+  "genre": "Metal, Classical, Gypsy",
+  "mood": "Exotic & Haunting",
+  "isCustom": false,
+  "fretPattern": null
+ },
+ {
+  "id": "altered",
+  "name": "Altered Scale",
+  "category": "jazz",
+  "intervals": [
+   0,
+   1,
+   3,
+   4,
+   6,
+   8,
+   10
+  ],
+  "degreeNames": [
+   "R",
+   "b2",
+   "b3",
+   "b4",
+   "b5",
+   "b6",
+   "b7"
+  ],
+  "description": "7th mode of melodic minor. Every tension note altered. THE jazz dominant scale for maximum color.",
+  "genre": "Jazz, Fusion",
+  "mood": "Maximum Tension",
+  "isCustom": false,
+  "fretPattern": null
+ },
+ {
+  "id": "whole-tone",
+  "name": "Whole Tone",
+  "category": "exotic",
+  "intervals": [
+   0,
+   2,
+   4,
+   6,
+   8,
+   10
+  ],
+  "degreeNames": [
+   "R",
+   "2",
+   "3",
+   "#4",
+   "#5",
+   "b7"
+  ],
+  "description": "All whole steps. Symmetrical, dreamy, unresolved. Used by Debussy, Steve Vai, Joe Satriani.",
+  "genre": "Progressive, Classical",
+  "mood": "Dreamy & Floating",
+  "isCustom": false,
+  "fretPattern": null
+ },
+ {
+  "id": "chromatic",
+  "name": "Chromatic",
+  "category": "exotic",
+  "intervals": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11
+  ],
+  "degreeNames": [
+   "R",
+   "b2",
+   "2",
+   "b3",
+   "3",
+   "4",
+   "b5",
+   "5",
+   "b6",
+   "6",
+   "b7",
+   "7"
+  ],
+  "description": "All 12 notes. Every fret. Used for chromatic runs and passing tones.",
+  "genre": "All",
+  "mood": "Neutral — depends on context",
+  "isCustom": false,
+  "fretPattern": null
+ }
+]

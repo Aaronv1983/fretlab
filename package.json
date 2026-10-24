@@ -12,17 +12,19 @@
     "build": "vite build",
     "preview": "vite preview",
     "deploy": "gh-pages -d dist",
-    "build:desktop": "cross-env FRETLAB_DESKTOP=1 vite build",
+    "dev:desktop": "vite -c vite.desktop.config.js",
+    "build:desktop": "vite build -c vite.desktop.config.js",
     "desktop": "npm run build:desktop && electron .",
-    "dist:win": "npm run build:desktop && electron-builder --win --config electron-builder.config.cjs"
+    "dist:win": "npm run build:desktop && electron-builder --win --config electron-builder.config.cjs",
+    "sync:ios": "node tools/swift2json.cjs"
   },
   "dependencies": {
+    "lucide-react": "^1.61.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",
-    "cross-env": "^10.1.0",
     "electron": "^45.0.0",
     "electron-builder": "^26.18.0",
     "gh-pages": "^6.3.0",

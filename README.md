@@ -95,25 +95,28 @@ npm run preview   # preview the production build locally
 
 ---
 
-## Windows Desktop App
+## Windows Desktop App (replica of the iOS app)
 
-The same app ships as a native Windows program via Electron. The web/GitHub Pages build is unaffected.
+`desktop/` is a Windows build of the **FRETLAB iOS app** (not this web version): Home, Courses, guided Practice sessions, Checkpoint quizzes with SM-2 spaced repetition, Solo Woodshed with lick library, and the Scale Library. All 3 courses / 30 weeks of curriculum (144 exercises, 89 theory lessons, 164 quiz questions) and the 20 built-in scales are generated straight from the Swift source. The web/GitHub Pages build is unaffected.
 
 ```bash
 npm install
-npm run desktop     # build + run the desktop app locally
-npm run dist:win    # build release/FRETLAB-Setup-<version>.exe and release/FRETLAB-<version>-portable.exe
+npm run dev:desktop   # live-reload in the browser at http://localhost:5173
+npm run desktop       # build + run the Windows app shell locally
+npm run dist:win      # build release/FRETLAB-Setup-<version>.exe and release/FRETLAB-<version>-portable.exe
 ```
+
+**Keeping it in sync with iOS:** after changing curriculum or scales in Xcode, run
+`npm run sync:ios -- /path/to/FretLab` (the folder that contains `Data/`, `Models/`, `Services/`). It regenerates `desktop/src/data/curriculum.json` and `scales.json` from the Swift files.
 
 - **Installer** (`FRETLAB-Setup-*.exe`) — Start Menu + desktop shortcuts, choose install folder, uninstaller.
 - **Portable** (`FRETLAB-*-portable.exe`) — single exe, no install.
-- Practice history is stored per-user in `%APPDATA%\FRETLAB` and survives updates/reinstalls.
-- Tuner and Key Finder use the mic; if they get no input, check **Windows Settings → Privacy & security → Microphone → Let desktop apps access your microphone**.
+- Progress, review cards, solos and custom scales are stored per-user in `%APPDATA%\FRETLAB` and survive updates/reinstalls.
 - Builds aren't code-signed, so Windows SmartScreen shows "Windows protected your PC" on first run → **More info → Run anyway**.
 
 **CI:** `.github/workflows/desktop.yml` builds on a Windows runner. Run it from the Actions tab, or push a tag (`git tag v1.0.1 && git push --tags`) to publish a GitHub Release with both exes. Bump `version` in `package.json` first.
 
-Desktop files: `electron/main.cjs` (window, secure `app://` origin, mic permission), `electron-builder.config.cjs` (packaging), `build/icon.ico`.
+Layout: `desktop/src/views/` (screens), `desktop/src/store.jsx` (progress, SM-2, woodshed, scales), `desktop/src/services/` (metronome, tab parser), `tools/swift2json.cjs` (iOS sync), `electron/main.cjs` (window), `electron-builder.config.cjs` (packaging).
 
 ---
 
