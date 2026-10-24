@@ -95,6 +95,28 @@ npm run preview   # preview the production build locally
 
 ---
 
+## Windows Desktop App
+
+The same app ships as a native Windows program via Electron. The web/GitHub Pages build is unaffected.
+
+```bash
+npm install
+npm run desktop     # build + run the desktop app locally
+npm run dist:win    # build release/FRETLAB-Setup-<version>.exe and release/FRETLAB-<version>-portable.exe
+```
+
+- **Installer** (`FRETLAB-Setup-*.exe`) — Start Menu + desktop shortcuts, choose install folder, uninstaller.
+- **Portable** (`FRETLAB-*-portable.exe`) — single exe, no install.
+- Practice history is stored per-user in `%APPDATA%\FRETLAB` and survives updates/reinstalls.
+- Tuner and Key Finder use the mic; if they get no input, check **Windows Settings → Privacy & security → Microphone → Let desktop apps access your microphone**.
+- Builds aren't code-signed, so Windows SmartScreen shows "Windows protected your PC" on first run → **More info → Run anyway**.
+
+**CI:** `.github/workflows/desktop.yml` builds on a Windows runner. Run it from the Actions tab, or push a tag (`git tag v1.0.1 && git push --tags`) to publish a GitHub Release with both exes. Bump `version` in `package.json` first.
+
+Desktop files: `electron/main.cjs` (window, secure `app://` origin, mic permission), `electron-builder.config.cjs` (packaging), `build/icon.ico`.
+
+---
+
 ## Custom Domain (Optional)
 
 If you want to use your own domain (e.g., `fretlab.yourdomain.com`):
