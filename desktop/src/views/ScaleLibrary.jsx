@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { T, mono, sys, alpha } from '../theme.js';
 import { useStore } from '../store.jsx';
 import { FretboardView } from '../components/Fretboard.jsx';
+import TabScore from '../score/TabScore.jsx';
+import { modelFromPositions } from '../score/parseTab.js';
 import Icon from '../components/Icon.jsx';
 import { Sheet, NavButton } from '../components/Overlays.jsx';
 
@@ -154,7 +156,16 @@ export default function ScaleLibrary() {
             </div>
           )}
 
-          <FretboardView diagram={scaleDiagram(selected, root, position === 0 ? findRootFret(root) : position)} />
+          {(() => {
+            const diagram = scaleDiagram(selected, root, position === 0 ? findRootFret(root) : position);
+            return (
+              <>
+                <FretboardView diagram={diagram} />
+                <div style={{ ...mono(9, 700), color: T.textMuted, letterSpacing: 1 }}>TAB — ASCENDING THROUGH THIS POSITION</div>
+                <TabScore model={modelFromPositions(diagram.highlights)} />
+              </>
+            );
+          })()}
 
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {[0, 3, 5, 7, 10, 12].map((p) => (

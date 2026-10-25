@@ -1,6 +1,17 @@
 // Port of FretboardView.swift (display + interactive quiz mode)
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { T, MONO, alpha, sys } from '../theme.js';
+import { useStore } from '../store.jsx';
+
+// Left-handed: mirror the whole diagram, then un-mirror each label so it stays readable
+function useMirror(width) {
+  const lefty = !!useStore()?.settings?.leftHanded;
+  return {
+    lefty,
+    group: lefty ? `matrix(-1 0 0 1 ${width} 0)` : undefined,
+    flip: (x) => (lefty ? `translate(${2 * x} 0) scale(-1 1)` : undefined),
+  };
+}
 
 export function useWidth() {
   const ref = useRef(null);
@@ -25,6 +36,7 @@ const boxStyle = {
 // ── Display mode ──
 export function FretboardView({ diagram }) {
   const [ref, width] = useWidth();
+  const mir = useMirror(width);
   // Desktop: scale the diagram up as it gets wider (1.0 at phone width)
   const k = Math.max(1, Math.min(1.45, width / 400));
   const stringNames = ['E', 'B', 'G', 'D', 'A', 'E'];
@@ -66,11 +78,11 @@ export function FretboardView({ diagram }) {
     for (let f = 0; f < fretCount; f++) {
       const n = diagram.startFret + f;
       if (n > 0) {
-        els.push(<text key={`n${f}`} x={originX + (f + 0.5) * fretWidth} y={originY + stringSpacing * 5 + 12 * k} fill={T.textMuted} fontFamily={MONO} fontSize={9 * k} textAnchor="middle" dominantBaseline="central">{n}</text>);
+        els.push(<text key={`n${f}`} x={originX + (f + 0.5) * fretWidth} transform={mir.flip(originX + (f + 0.5) * fretWidth)} y={originY + stringSpacing * 5 + 12 * k} fill={T.textMuted} fontFamily={MONO} fontSize={9 * k} textAnchor="middle" dominantBaseline="central">{n}</text>);
       }
     }
     for (let s = 0; s < 6; s++) {
-      els.push(<text key={`l${s}`} x={10 * k} y={originY + s * stringSpacing} fill={T.textMuted} fontFamily={MONO} fontSize={9 * k} textAnchor="middle" dominantBaseline="central">{stringNames[s]}</text>);
+      els.push(<text key={`l${s}`} x={10 * k} transform={mir.flip(10 * k)} y={originY + s * stringSpacing} fill={T.textMuted} fontFamily={MONO} fontSize={9 * k} textAnchor="middle" dominantBaseline="central">{stringNames[s]}</text>);
     }
     diagram.highlights.forEach((hl, i) => {
       const fi = hl.fret - diagram.startFret;
@@ -81,7 +93,7 @@ export function FretboardView({ diagram }) {
       if (hl.isRoot) els.push(<circle key={`g${i}`} cx={x} cy={y} r={dotSize / 2 + 4 * k} fill={alpha(color, 0.2)} />);
       els.push(<circle key={`d${i}`} cx={x} cy={y} r={dotSize / 2} fill={color} />);
       if (hl.label) {
-        els.push(<text key={`t${i}`} x={x} y={y} fill="#000" fontFamily={MONO} fontWeight={800} fontSize={(hl.label.length > 2 ? 7 : 9) * k} textAnchor="middle" dominantBaseline="central">{hl.label}</text>);
+        els.push(<text key={`t${i}`} x={x} y={y} transform={mir.flip(x)} fill="#000" fontFamily={MONO} fontWeight={800} fontSize={(hl.label.length > 2 ? 7 : 9) * k} textAnchor="middle" dominantBaseline="central">{hl.label}</text>);
       }
     });
   }
@@ -92,7 +104,7 @@ export function FretboardView({ diagram }) {
       {diagram.subtitle != null ? <div style={{ ...sys(10), color: T.textSecondary, textAlign: 'center' }}>{diagram.subtitle}</div> : null}
       <div ref={ref} style={{ width: '100%', height: totalHeight + 14 * k }}>
         <div style={{ position: 'relative', height: totalHeight, borderRadius: 8, background: 'rgba(255,255,255,0.02)' }}>
-          <svg width={width} height={totalHeight} style={{ position: 'absolute', inset: 0, overflow: 'visible' }}>{els}</svg>
+          <svg width={width} height={totalHeight} style={{ position: 'absolute', inset: 0, overflow: 'visible' }}><g transform={mir.group}>{els}</g></svg>
         </div>
       </div>
     </div>
@@ -102,6 +114,7 @@ export function FretboardView({ diagram }) {
 // ── Interactive quiz mode ──
 export function InteractiveFretboard({ targetString, targetFret, targetNote, onAnswer }) {
   const [ref, width] = useWidth();
+  const mir = useMirror(width);
   const [tapped, setTapped] = useState(null);
   const answeredRef = useRef(false);
   const stringNames = ['e', 'B', 'G', 'D', 'A', 'E'];
@@ -134,11 +147,11 @@ export function InteractiveFretboard({ targetString, targetFret, targetNote, onA
     for (let s = 0; s < 6; s++) {
       const y = originY + s * stringSpacing;
       els.push(<line key={`s${s}`} x1={originX} y1={y} x2={originX + totalWidth} y2={y} stroke="rgba(255,255,255,0.12)" strokeWidth={s < 2 ? 1 : s < 4 ? 1.5 : 2} />);
-      els.push(<text key={`l${s}`} x={8 * k} y={y} fill={T.textMuted} fontFamily={MONO} fontSize={8 * k} textAnchor="middle" dominantBaseline="central">{stringNames[s]}</text>);
+      els.push(<text key={`l${s}`} x={8 * k} transform={mir.flip(8 * k)} y={y} fill={T.textMuted} fontFamily={MONO} fontSize={8 * k} textAnchor="middle" dominantBaseline="central">{stringNames[s]}</text>);
     }
     // Fret numbers: each column is labeled with the fret it represents (open column unlabeled)
     for (let f = 1; f < fretCount; f++) {
-      els.push(<text key={`n${f}`} x={labelWidth + (f + 0.5) * fretWidth} y={originY + stringSpacing * 5 + 14 * k} fill={T.textMuted} fontFamily={MONO} fontSize={7 * k} textAnchor="middle" dominantBaseline="central">{startFret + f}</text>);
+      els.push(<text key={`n${f}`} x={labelWidth + (f + 0.5) * fretWidth} transform={mir.flip(labelWidth + (f + 0.5) * fretWidth)} y={originY + stringSpacing * 5 + 14 * k} fill={T.textMuted} fontFamily={MONO} fontSize={7 * k} textAnchor="middle" dominantBaseline="central">{startFret + f}</text>);
     }
     for (let s = 0; s < 6; s++) {
       for (let f = 0; f < fretCount; f++) {
@@ -156,7 +169,7 @@ export function InteractiveFretboard({ targetString, targetFret, targetNote, onA
       <g key={key} style={{ pointerEvents: 'none' }}>
         <circle cx={x} cy={y} r={14 * k} fill={alpha(color, 0.35)} filter="url(#fl-blur)" />
         <circle cx={x} cy={y} r={12 * k} fill={color} />
-        <text x={x} y={y} fill="#000" fontFamily={label.length > 1 && fontSize === 8 ? MONO : undefined} fontWeight={800} fontSize={fontSize * k} textAnchor="middle" dominantBaseline="central">{label}</text>
+        <text x={x} y={y} transform={mir.flip(x)} fill="#000" fontFamily={label.length > 1 && fontSize === 8 ? MONO : undefined} fontWeight={800} fontSize={fontSize * k} textAnchor="middle" dominantBaseline="central">{label}</text>
       </g>
     );
   };
@@ -174,9 +187,11 @@ export function InteractiveFretboard({ targetString, targetFret, targetNote, onA
         <div style={{ position: 'relative', height: stringSpacing * 5 + 36 * k, borderRadius: 10, background: 'rgba(255,255,255,0.02)' }}>
           <svg width={width} height={stringSpacing * 5 + 36 * k} style={{ position: 'absolute', inset: 0, overflow: 'visible' }}>
             <defs><filter id="fl-blur"><feGaussianBlur stdDeviation="3" /></filter></defs>
-            {els}
-            {tapped && dot('tap', tapped.f, tapped.s, correct ? T.green : T.red, correct ? '✓' : '✗', 11)}
-            {tapped && !correct && dot('ans', targetFret, targetString, T.green, targetNote, 8)}
+            <g transform={mir.group}>
+              {els}
+              {tapped && dot('tap', tapped.f, tapped.s, correct ? T.green : T.red, correct ? '✓' : '✗', 11)}
+              {tapped && !correct && dot('ans', targetFret, targetString, T.green, targetNote, 8)}
+            </g>
           </svg>
         </div>
       </div>

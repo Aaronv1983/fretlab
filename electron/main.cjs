@@ -2,9 +2,14 @@
 // Serves the Vite build from a privileged app:// origin so localStorage persists
 // between launches and the app runs in a secure context (Web Audio metronome).
 
-const { app, BrowserWindow, protocol, net, session, shell, Menu } = require('electron');
+const { app, BrowserWindow, protocol, net, session, shell, Menu, ipcMain, dialog } = require('electron');
 const path = require('node:path');
+const fs = require('node:fs');
 const { pathToFileURL } = require('node:url');
+
+// Pin the data folder so progress always lives in %APPDATA%\FRETLAB, across every version and reinstall
+app.setName('FRETLAB');
+app.setPath('userData', path.join(app.getPath('appData'), 'FRETLAB'));
 
 const SCHEME = 'app';
 const HOST = 'fretlab';
@@ -66,7 +71,7 @@ function createWindow() {
     height: 840,
     minWidth: 1024,
     minHeight: 680,
-    backgroundColor: '#0A0A0B',
+    backgroundColor: '#313338',
     title: 'FRETLAB',
     icon: path.join(__dirname, '..', 'build', 'icon.ico'),
     autoHideMenuBar: true,
@@ -76,6 +81,7 @@ function createWindow() {
       nodeIntegration: false,
       sandbox: true,
       spellcheck: false,
+      preload: path.join(__dirname, 'preload.cjs'),
       backgroundThrottling: false, // keep the metronome steady when the window is in the background
     },
   });
@@ -96,6 +102,99 @@ function createWindow() {
 
   win.loadURL(APP_URL);
   win.on('closed', () => { win = null; });
+}
+
+// ── Progress files ──
+// progress.json  = latest progress (rewritten on every change)
+// backups/progress-YYYY-MM-DD.json = one per day, last 30 kept
+const progressFile = () => path.join(app.getPath('userData'), 'progress.json');
+const backupDir = () => path.join(app.getPath('userData'), 'backups');
+const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+
+function writeAtomic(file, text) {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  const tmp = `${file}.tmp`;
+  fs.writeFileSync(tmp, text, 'utf8');
+  fs.renameSync(tmp, file);
+}
+function validSnapshot(s) {
+  return !!s && s.app === 'FRETLAB' && s.data && typeof s.data === 'object'
+    && Object.entries(s.data).every(([k, v]) => k.startsWith('fretlab_') && typeof v === 'string');
+}
+function readSnapshot(file) {
+  try { const s = JSON.parse(fs.readFileSync(file, 'utf8')); return validSnapshot(s) ? s : null; } catch { return null; }
+}
+function listBackups() {
+  try {
+    return fs.readdirSync(backupDir()).filter((f) => /^progress-.*\.json$/.test(f)).sort().reverse();
+  } catch { return []; }
+}
+function pruneBackups() {
+  const daily = listBackups().filter((f) => /^progress-\d{4}-\d{2}-\d{2}\.json$/.test(f));
+  for (const f of daily.slice(30)) { try { fs.unlinkSync(path.join(backupDir(), f)); } catch { /* ignore */ } }
+}
+const fromApp = (e) => { try { return new URL(e.senderFrame.url).protocol === `${SCHEME}:`; } catch { return false; } };
+
+function registerIpc() {
+  ipcMain.handle('progress:save', (e, snap, kind) => {
+    if (!fromApp(e) || !validSnapshot(snap)) return { ok: false };
+    const text = JSON.stringify(snap);
+    if (kind === 'before-reset') {
+      const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+      writeAtomic(path.join(backupDir(), `progress-before-reset-${stamp}.json`), text);
+      return { ok: true, savedAt: snap.savedAt };
+    }
+    writeAtomic(progressFile(), text);
+    writeAtomic(path.join(backupDir(), `progress-${today()}.json`), text);
+    pruneBackups();
+    return { ok: true, savedAt: snap.savedAt };
+  });
+
+  ipcMain.handle('progress:latest', (e) => {
+    if (!fromApp(e)) return null;
+    const main = readSnapshot(progressFile());
+    if (main) return main;
+    for (const f of listBackups()) { const s = readSnapshot(path.join(backupDir(), f)); if (s) return s; }
+    return null;
+  });
+
+  ipcMain.handle('progress:export', async (e, snap) => {
+    if (!fromApp(e) || !validSnapshot(snap)) return { ok: false };
+    const r = await dialog.showSaveDialog(win, {
+      title: 'Export FRETLAB progress',
+      defaultPath: path.join(app.getPath('documents'), `FRETLAB Progress ${today()}.json`),
+      filters: [{ name: 'FRETLAB progress', extensions: ['json'] }],
+    });
+    if (r.canceled || !r.filePath) return { ok: false, canceled: true };
+    writeAtomic(r.filePath, JSON.stringify(snap, null, 1));
+    return { ok: true, file: r.filePath };
+  });
+
+  ipcMain.handle('progress:import', async (e) => {
+    if (!fromApp(e)) return { ok: false };
+    const r = await dialog.showOpenDialog(win, {
+      title: 'Import FRETLAB progress',
+      defaultPath: app.getPath('documents'),
+      properties: ['openFile'],
+      filters: [{ name: 'FRETLAB progress', extensions: ['json'] }],
+    });
+    if (r.canceled || !r.filePaths[0]) return { ok: false, canceled: true };
+    const snap = readSnapshot(r.filePaths[0]);
+    if (!snap) return { ok: false, error: 'That file is not a FRETLAB progress file.' };
+    return { ok: true, snapshot: snap };
+  });
+
+  ipcMain.handle('progress:openFolder', (e) => {
+    if (!fromApp(e)) return;
+    fs.mkdirSync(backupDir(), { recursive: true });
+    return shell.openPath(backupDir());
+  });
+
+  ipcMain.handle('app:info', (e) => {
+    if (!fromApp(e)) return null;
+    const latest = readSnapshot(progressFile());
+    return { version: app.getVersion(), dataDir: app.getPath('userData'), backupDir: backupDir(), backups: listBackups().length, lastSaved: latest?.savedAt || null };
+  });
 }
 
 app.on('second-instance', () => {
@@ -123,6 +222,7 @@ app.whenReady().then(() => {
   ]));
 
   registerProtocol();
+  registerIpc();
   setPermissions();
   createWindow();
 });

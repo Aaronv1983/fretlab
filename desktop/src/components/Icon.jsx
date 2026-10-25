@@ -3,7 +3,7 @@ import {
   House, Library, Play, ListMusic, CircleCheck, Flame, Guitar, BookOpen, BadgeCheck, Lock, ChevronLeft, ChevronRight,
   ChevronDown, ArrowRight, RotateCw, Metronome, Piano, Brain, Lightbulb, Trophy, CirclePlus, Camera, Keyboard, Image,
   Music, Heart, Hammer, CircleArrowUp, ArrowDownLeft, AudioWaveform, Pointer, Diamond, Hand, Wind, Zap, Square, ScanLine,
-  CircleX, Check, HeartHandshake, ClipboardPaste, Trash2,
+  CircleX, Check, HeartHandshake, ClipboardPaste, Trash2, Settings, Download, Upload, FolderOpen, RotateCcw, User, Hand as HandIcon, HardDrive,
 } from 'lucide-react';
 
 const TuningFork = ({ size = 18, color = 'currentColor', strokeWidth = 2 }) => (
@@ -22,6 +22,7 @@ const MAP = {
   music: Music, heart: Heart, hammer: Hammer, arrowUpCircle: CircleArrowUp, arrowDownLeft: ArrowDownLeft,
   waveform: AudioWaveform, tap: Pointer, diamond: Diamond, hand: Hand, wind: Wind, bolt: Zap, stop: Square,
   viewfinder: ScanLine, xCircle: CircleX, check: Check, heartText: HeartHandshake, paste: ClipboardPaste, trash: Trash2,
+  settings: Settings, download: Download, upload: Upload, folder: FolderOpen, reset: RotateCcw, user: User, handOpen: HandIcon, disk: HardDrive,
 };
 
 // SF ".fill" symbols are solid; mimic with a fill for the shapes where it reads well
@@ -33,7 +34,7 @@ export default function Icon({ name, size = 16, color = 'currentColor', fill, st
     return (
       <svg width={size} height={size} viewBox="0 0 24 24" style={style}>
         <circle cx="12" cy="12" r="11" fill={color} />
-        <path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#0A0A0F" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#25272B" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     );
   }
@@ -41,7 +42,7 @@ export default function Icon({ name, size = 16, color = 'currentColor', fill, st
     return (
       <svg width={size} height={size} viewBox="0 0 24 24" style={style}>
         <circle cx="12" cy="12" r="11" fill={color} />
-        <path d="M12 7v10M7 12h10" stroke="#0A0A0F" strokeWidth="2.4" strokeLinecap="round" />
+        <path d="M12 7v10M7 12h10" stroke="#25272B" strokeWidth="2.4" strokeLinecap="round" />
       </svg>
     );
   }
@@ -49,7 +50,7 @@ export default function Icon({ name, size = 16, color = 'currentColor', fill, st
     return (
       <svg width={size} height={size} viewBox="0 0 24 24" style={style}>
         <circle cx="12" cy="12" r="11" fill={color} />
-        <path d="M8 8l8 8M16 8l-8 8" stroke="#0A0A0F" strokeWidth="2.4" strokeLinecap="round" />
+        <path d="M8 8l8 8M16 8l-8 8" stroke="#25272B" strokeWidth="2.4" strokeLinecap="round" />
       </svg>
     );
   }

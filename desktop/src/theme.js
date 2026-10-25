@@ -1,32 +1,34 @@
 // Port of FLTheme.swift
+// Guitar Pro–inspired palette: charcoal panels, GP red accent, GP blue selection, white score paper
 export const T = {
-  bg: '#0A0A0F',
-  card: '#141420',
-  cardHover: '#1A1A2E',
+  bg: '#313338',
+  sidebar: '#25272B',
+  card: '#3B3E44',
+  cardHover: '#45484F',
 
-  accent: '#FF6B35',
-  accentSoft: 'rgba(255,107,53,0.12)',
-  accentGlow: 'rgba(255,107,53,0.25)',
+  accent: '#E8312A',
+  accentSoft: 'rgba(232,49,42,0.16)',
+  accentGlow: 'rgba(232,49,42,0.32)',
 
-  green: '#34D399',
-  greenSoft: 'rgba(52,211,153,0.12)',
-  blue: '#60A5FA',
-  blueSoft: 'rgba(96,165,250,0.12)',
-  purple: '#A78BFA',
-  purpleSoft: 'rgba(167,139,250,0.12)',
-  yellow: '#FBBF24',
-  yellowSoft: 'rgba(251,191,36,0.12)',
-  red: '#F87171',
-  redSoft: 'rgba(248,113,113,0.12)',
+  green: '#43C08A',
+  greenSoft: 'rgba(67,192,138,0.15)',
+  blue: '#4E9BF5',
+  blueSoft: 'rgba(78,155,245,0.15)',
+  purple: '#9D8DF7',
+  purpleSoft: 'rgba(157,141,247,0.15)',
+  yellow: '#F0C246',
+  yellowSoft: 'rgba(240,194,70,0.14)',
+  red: '#FF6B66',
+  redSoft: 'rgba(255,107,102,0.15)',
 
-  text: '#F0F0F8',
-  textSecondary: '#8585A0',
-  textMuted: '#4A4A62',
+  text: '#EDEDED',
+  textSecondary: '#A9ADB4',
+  textMuted: '#71767E',
 
-  border: 'rgba(255,255,255,0.06)',
-  borderLight: 'rgba(255,255,255,0.10)',
+  border: 'rgba(255,255,255,0.08)',
+  borderLight: 'rgba(255,255,255,0.13)',
 
-  cardRadius: 14,
+  cardRadius: 8,
   cardPadding: 16,
 };
 

@@ -6,6 +6,7 @@ import { keyDisplayName } from '../services/tabParser.js';
 import Icon from '../components/Icon.jsx';
 import { Sheet, NavButton } from '../components/Overlays.jsx';
 import { useMetronome } from './Session.jsx';
+import TabScore from '../score/TabScore.jsx';
 
 const DIFF = {
   beginner: ['Beginner', T.green], intermediate: ['Intermediate', T.blue], advanced: ['Advanced', T.purple], expert: ['Expert', T.red],
@@ -133,9 +134,7 @@ function LickCard({ lick }) {
         <span style={{ ...mono(10, 600), color: T.blue, background: T.blueSoft, padding: '3px 8px', borderRadius: 999 }}>{lick.key}</span>
       </div>
       <div className="fl-hscroll" style={{ display: 'flex', gap: 6, overflowX: 'auto' }}>{lick.techniques.map((t) => <TechTag key={t} t={t} small />)}</div>
-      <div className="fl-hscroll" style={{ padding: 8, background: 'rgba(255,255,255,0.02)', borderRadius: 8, overflowX: 'auto' }}>
-        {lick.tabLines.slice(0, 6).map((line, i) => <div key={i} style={{ ...mono(9), color: T.textMuted, whiteSpace: 'pre', minHeight: '1.2em' }}>{line}</div>)}
-      </div>
+      <TabScore lines={lick.tabLines.slice(0, 6)} assumeTab compact notation={false} />
     </div>
   );
 }
@@ -265,8 +264,8 @@ function SoloDetail({ project, onBack }) {
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: T.bg }}>
       {/* Navigation bar (inline title) */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', padding: '14px 28px', borderBottom: `1px solid ${T.border}` }}>
-        <button className="fl-link" onClick={onBack} style={{ justifySelf: 'start', display: 'flex', alignItems: 'center', gap: 2, color: '#0A84FF', ...sys(16) }}>
-          <Icon name="chevronLeft" size={20} color="#0A84FF" strokeWidth={2.5} /> Back
+        <button className="fl-link" onClick={onBack} style={{ justifySelf: 'start', display: 'flex', alignItems: 'center', gap: 2, color: T.blue, ...sys(16) }}>
+          <Icon name="chevronLeft" size={20} color={T.blue} strokeWidth={2.5} /> Back
         </button>
         <div style={{ ...sys(17, 700), color: T.text, maxWidth: 520, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{project.title}</div>
         <div />
@@ -336,9 +335,7 @@ function SoloDetail({ project, onBack }) {
                 <span style={{ ...sys(20, 800), color: T.text, flex: 1 }}>{chunk.label}</span>
                 <div style={{ display: 'flex', gap: 4 }}>{chunk.techniques.slice(0, 3).map((t) => <Icon key={t} name={TECH[t]?.[1]} size={10} color={TECH[t]?.[2]} />)}</div>
               </div>
-              <div className="fl-hscroll" style={{ padding: 18, background: 'rgba(255,255,255,0.02)', borderRadius: 10, border: `1px solid ${T.border}`, overflowX: 'auto' }}>
-                {chunk.tabLines.map((line, i) => <div key={i} style={{ ...mono(15), color: T.text, whiteSpace: 'pre', minHeight: '1.3em', lineHeight: 1.3 }}>{line}</div>)}
-              </div>
+              <TabScore lines={chunk.tabLines} assumeTab tempo={Math.trunc((chunk.currentTempoPct * project.targetBPM) / 100)} />
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

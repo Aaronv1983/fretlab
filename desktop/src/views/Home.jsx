@@ -37,7 +37,7 @@ export default function Home({ go }) {
         <div style={{ display: 'flex', alignItems: 'center', marginBottom: 24 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <div style={{ ...mono(11), color: T.textSecondary, letterSpacing: 1.5 }}>{greeting}</div>
-            <div style={{ ...sys(28, 800), color: T.text }}>Aaron</div>
+            <div style={{ ...sys(28, 800), color: T.text }}>{st.settings.name || 'Welcome back'}</div>
           </div>
           <div style={{ flex: 1 }} />
           <StreakBadge count={st.streak} />

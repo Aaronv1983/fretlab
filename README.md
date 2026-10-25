@@ -111,7 +111,9 @@ npm run dist:win      # build release/FRETLAB-Setup-<version>.exe and release/FR
 
 - **Installer** (`FRETLAB-Setup-*.exe`) — Start Menu + desktop shortcuts, choose install folder, uninstaller.
 - **Portable** (`FRETLAB-*-portable.exe`) — single exe, no install.
-- Progress, review cards, solos and custom scales are stored per-user in `%APPDATA%\FRETLAB` and survive updates/reinstalls.
+- **Progress survives updates.** Everything is saved per-user in `%APPDATA%\FRETLAB` (outside the install folder), mirrored on every change to `progress.json`, with a dated daily copy in `backups\` (last 30 kept). Installing a new version over the old one keeps it all; if the app's storage is ever empty on launch, it restores from `progress.json` automatically. **Settings → Export/Import progress** moves it to another PC.
+- **To ship an update:** bump `version` in `package.json`, run `npm run dist:win` (or push a `v*` tag for CI), and install the new `FRETLAB-Setup-x.y.z.exe` over the old one. Don't change `appId`/`productName` — they tie the install to the same data folder.
+- **Per-user setup:** first launch asks for a name and playing hand (left-handed mirrors fretboard diagrams). Change any time in **Settings**, along with the standard-notation-over-tab toggle.
 - Builds aren't code-signed, so Windows SmartScreen shows "Windows protected your PC" on first run → **More info → Run anyway**.
 
 **CI:** `.github/workflows/desktop.yml` builds on a Windows runner. Run it from the Actions tab, or push a tag (`git tag v1.0.1 && git push --tags`) to publish a GitHub Release with both exes. Bump `version` in `package.json` first.

@@ -1,10 +1,13 @@
 // Ports of CurriculumManager, ProgressManager, SpacedRepetitionEngine, SoloWoodshedManager, ScaleLibraryManager
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import COURSES from './data/curriculum.json';
 import BUILT_IN_SCALES from './data/scales.json';
 import { KEYS, load, save, startOfDay, daysBetween, addDays, uuid } from './services/storage.js';
 import * as parser from './services/tabParser.js';
 import { SKILL_NAME, SKILL_THREADS } from './theme.js';
+import { scheduleBackup } from './services/backup.js';
+
+export const DEFAULT_SETTINGS = { name: '', leftHanded: false, showNotation: true, onboarded: false };
 
 const Ctx = createContext(null);
 export const useStore = () => useContext(Ctx);
@@ -83,6 +86,10 @@ export function StoreProvider({ children }) {
   const [customScales, setCustomScales] = useState(() => load(KEYS.customScales, []));
   const [favoriteScaleIds, setFavoriteScaleIds] = useState(() => load(KEYS.favScales, []));
 
+  // ── Settings (per user: name, handedness, notation) ──
+  const [settings, setSettings] = useState(() => ({ ...DEFAULT_SETTINGS, ...load(KEYS.settings, {}) }));
+  const updateSettings = useCallback((patch) => setSettings((s) => ({ ...s, ...patch })), []);
+
   // Persistence
   useEffect(() => save(KEYS.currentRoutine, currentRoutineId), [currentRoutineId]);
   useEffect(() => save(KEYS.progress, routineProgress), [routineProgress]);
@@ -95,6 +102,11 @@ export function StoreProvider({ children }) {
   useEffect(() => save(KEYS.licks, lickLibrary), [lickLibrary]);
   useEffect(() => save(KEYS.customScales, customScales), [customScales]);
   useEffect(() => save(KEYS.favScales, favoriteScaleIds), [favoriteScaleIds]);
+  useEffect(() => save(KEYS.settings, settings), [settings]);
+
+  // Mirror everything to the on-disk backup after any change (runs after the saves above)
+  const mounted = useRef(false);
+  useEffect(() => { if (!mounted.current) { mounted.current = true; return; } scheduleBackup(); }, [currentRoutineId, routineProgress, skills, stats, cards, projects, lickLibrary, customScales, favoriteScaleIds, settings]);
 
   // ── Progress API ──
   const progressFor = useCallback((routineId) => routineProgress[routineId] || {
@@ -286,6 +298,7 @@ export function StoreProvider({ children }) {
   const currentDayInRoutine = Math.min(progressFor(currentRoutineId).completedDays + 1, 7);
 
   const value = {
+    settings, updateSettings,
     courses: COURSES, currentRoutine, currentDayInRoutine, setCurrentRoutineId, advanceToNextRoutine,
     progressFor, isRoutineUnlocked, isRoutineMastered, completePracticeDay, completeRoutineMastery,
     updateSkillScores, skillRadarData, streak, totalPracticeMinutes,

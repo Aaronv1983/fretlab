@@ -32,7 +32,7 @@ export default function Courses({ go }) {
                     style={{
                       flex: 1, display: 'flex', alignItems: 'center', gap: 12, padding: '16px 18px',
                       background: isCurrent ? T.accentSoft : T.card, borderRadius: 12,
-                      border: `1px solid ${isCurrent ? 'rgba(255,107,53,0.25)' : T.border}`,
+                      border: `1px solid ${isCurrent ? T.accentGlow : T.border}`,
                       opacity: isUnlocked ? 1 : 0.35, cursor: isUnlocked && !isCurrent ? 'pointer' : 'default',
                     }}>
                     <div style={{

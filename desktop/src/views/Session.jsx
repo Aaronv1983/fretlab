@@ -4,6 +4,7 @@ import { T, mono, sys, BLOCK, blockColor, alpha } from '../theme.js';
 import { useStore } from '../store.jsx';
 import { metronome } from '../services/metronome.js';
 import { FretboardView } from '../components/Fretboard.jsx';
+import TabScore from '../score/TabScore.jsx';
 import Icon from '../components/Icon.jsx';
 
 export function useMetronome() {
@@ -266,16 +267,7 @@ function ExerciseDetail({ ex, m }) {
           {ex.fretboardDiagrams.map((d, i) => <FretboardView key={i} diagram={d} />)}
         </div>
       )}
-      {ex.tabNotation && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: 12, background: 'rgba(255,255,255,0.02)', borderRadius: 12, border: `1px solid ${T.border}` }}>
-          {ex.tabNotation.tempo > 0 && <div style={{ ...mono(10), color: T.accent }}>♩ = {ex.tabNotation.tempo} BPM</div>}
-          <div className="fl-hscroll" style={{ overflowX: 'auto' }}>
-            {ex.tabNotation.lines.map((line, i) => (
-              <div key={i} style={{ ...mono(11), color: T.textSecondary, whiteSpace: 'pre', minHeight: '1.25em', lineHeight: 1.25 }}>{line}</div>
-            ))}
-          </div>
-        </div>
-      )}
+      {ex.tabNotation && <TabScore lines={ex.tabNotation.lines} tempo={ex.tabNotation.tempo} />}
       {ex.tips.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: 12, background: T.yellowSoft, borderRadius: 10, border: `1px solid ${alpha(T.yellow, 0.15)}` }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, ...mono(10, 700), color: T.yellow, letterSpacing: 1 }}>

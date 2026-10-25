@@ -9,6 +9,8 @@ import Session from './views/Session.jsx';
 import Woodshed from './views/Woodshed.jsx';
 import Checkpoint from './views/Checkpoint.jsx';
 import ScaleLibrary from './views/ScaleLibrary.jsx';
+import Settings from './views/Settings.jsx';
+import Welcome from './views/Welcome.jsx';
 
 const TABS = [
   ['home', 'Home', 'house'],
@@ -18,6 +20,7 @@ const TABS = [
   ['quiz', 'Quiz', 'checkCircleFill'],
 ];
 const TOOLS = [['scales', 'Scale Library', 'music']];
+const APP = [['settings', 'Settings', 'settings']];
 
 export default function App() {
   return (
@@ -30,7 +33,7 @@ export default function App() {
 function Shell() {
   const st = useStore();
   const [tab, setTab] = useState('home');
-  const screens = { home: Home, courses: Courses, practice: Session, woodshed: Woodshed, quiz: Checkpoint, scales: ScaleLibraryPage };
+  const screens = { home: Home, courses: Courses, practice: Session, woodshed: Woodshed, quiz: Checkpoint, scales: ScaleLibraryPage, settings: Settings };
   const Screen = screens[tab];
   const r = st.currentRoutine;
 
@@ -60,6 +63,7 @@ function Shell() {
         <div className="fl-nav-label" style={{ marginTop: 18 }}>TOOLS</div>
         {TOOLS.map(navItem)}
         <div style={{ flex: 1 }} />
+        <div style={{ marginBottom: 10 }}>{APP.map(navItem)}</div>
         {r && (
           <div className="fl-press" onClick={() => setTab('practice')} style={{ padding: 14, background: T.card, borderRadius: 12, border: `1px solid ${T.border}`, cursor: 'pointer' }}>
             <div style={{ ...mono(9, 700), color: T.accent, letterSpacing: 1.5 }}>CURRENT WEEK</div>
@@ -75,6 +79,7 @@ function Shell() {
       <main className="fl-main">
         <Screen key={tab} go={setTab} />
       </main>
+      {!st.settings.onboarded && <Welcome />}
     </div>
   );
 }

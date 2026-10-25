@@ -12,6 +12,7 @@ export const KEYS = {
   licks: 'fretlab_lick_library',
   currentRoutine: 'fretlab_current_routine',
   currentDay: 'fretlab_current_day',
+  settings: 'fretlab_settings',
 };
 
 export function load(key, fallback) {

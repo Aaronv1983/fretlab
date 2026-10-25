@@ -50,7 +50,7 @@ export function Alert({ open, title, message, buttons, onClose }) {
             <button key={b.label} onClick={() => { onClose(); b.action?.(); }}
               style={{
                 flex: 1, padding: '12px 8px', background: 'none', border: 'none', cursor: 'pointer', fontFamily: SANS, fontSize: 16,
-                color: '#0A84FF', fontWeight: b.role === 'cancel' ? 600 : 400,
+                color: T.blue, fontWeight: b.role === 'cancel' ? 600 : 400,
                 borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.12)' : 'none',
               }}>
               {b.label}
