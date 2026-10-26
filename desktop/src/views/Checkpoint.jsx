@@ -1,12 +1,15 @@
 // Port of CheckpointViewV2.swift
-import { useMemo, useRef, useState } from 'react';
-import { T, mono, sys, SKILL_NAME } from '../theme.js';
+import { useEffect, useRef, useState } from 'react';
+import { T, mono, sys } from '../theme.js';
 import { useStore, qualityFromResult } from '../store.jsx';
 import { InteractiveFretboard } from '../components/Fretboard.jsx';
+import { useGame } from '../game/GameProvider.jsx';
+import { XP } from '../game/engine.js';
 import Icon from '../components/Icon.jsx';
 
 export default function Checkpoint({ go }) {
   const st = useStore();
+  const g = useGame();
   const questions = st.currentRoutine?.checkpointQuestions || [];
   const [currentQ, setCurrentQ] = useState(0);
   const [selected, setSelected] = useState(null);
@@ -29,6 +32,9 @@ export default function Checkpoint({ go }) {
     const rt = (Date.now() - startTime.current) / 1000;
     st.recordReview(q.id, qualityFromResult(correct, rt));
     st.updateSkillScores(q.skillThreads, correct);
+    g.bump('quizAnswers');
+    if (correct) g.earn(XP.correct, 'Correct answer', { quiet: true });
+    g.sound(correct ? 'correct' : 'wrong');
   };
 
   const onMC = (i, q) => {
@@ -48,7 +54,7 @@ export default function Checkpoint({ go }) {
   };
 
   if (showResults) {
-    return <Results st={st} questions={questions} score={score} go={go}
+    return <Results st={st} g={g} questions={questions} score={score} go={go}
       onReset={() => { setCurrentQ(0); setSelected(null); setAnswered(false); setScore(0); setShowResults(false); }} />;
   }
 
@@ -108,17 +114,35 @@ export default function Checkpoint({ go }) {
   );
 }
 
-function Results({ st, questions, score, go, onReset }) {
+function Results({ st, g, questions, score, go, onReset }) {
   const pct = Math.trunc((score / questions.length) * 100);
   const passed = pct >= 75;
-  // XP gains (random 5-15 per skill, as iOS) — computed once per results screen
-  const gains = useMemo(() => {
-    const threads = [...new Set(questions.flatMap((q) => q.skillThreads))].slice(0, 3);
-    return threads.map((t) => [t, `${SKILL_NAME[t]} +${5 + Math.floor(Math.random() * 11)} XP`]);
-  }, [questions]);
   const schedule = st.reviewSchedule().slice(0, 5);
   const routineId = st.currentRoutine?.id;
   const isLast = routineId === 'a-w10';
+
+  // Real XP for this checkpoint (awarded once when the results appear)
+  const [gains, setGains] = useState([]);
+  const awarded = useRef(false);
+  useEffect(() => {
+    if (awarded.current) return;
+    awarded.current = true;
+    const list = [];
+    if (score > 0) list.push([`${score} correct × ${XP.correct}`, score * XP.correct]); // already earned per answer
+    list.push(['Checkpoint complete', g.earn(XP.checkpoint, 'Checkpoint complete')]);
+    g.bump('checkpoints');
+    if (pct === 100) { list.push(['Perfect score', g.earn(XP.perfect, 'Perfect score!')]); g.bump('perfect'); }
+    if (passed && routineId && !st.isRoutineMastered(routineId)) {
+      const x = g.earn(XP.mastered, `Week ${st.currentRoutine.weekNumber} mastered`, { once: `master:${routineId}` });
+      if (x) list.push(['Week mastered', x]);
+    }
+    setGains(list.filter(([, x]) => x > 0));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const total = gains.reduce((sum, [, x]) => sum + x, 0);
+  const message = pct === 100 ? 'Flawless! You nailed every question.'
+    : passed ? (isLast ? 'You passed the final checkpoint of the whole curriculum. Incredible work.' : 'Great job — that unlocks next week.')
+    : pct >= 50 ? 'So close! You need 75% to unlock next week. Review the theory block and try again.'
+    : 'Every rep counts. Revisit the lesson and give it another go — you\'ve got this.';
 
   const done = () => {
     if (routineId) {
@@ -137,9 +161,11 @@ function Results({ st, questions, score, go, onReset }) {
         <div style={{ ...sys(24, 800), color: T.text }}>{passed ? 'Checkpoint Passed!' : 'Keep Practicing!'}</div>
         <div style={{ ...mono(56, 800), color: passed ? T.green : T.yellow }}>{pct}%</div>
         <div style={{ ...sys(14), color: T.textSecondary }}>{score}/{questions.length} correct</div>
+        <div style={{ ...sys(15), color: T.text, textAlign: 'center', padding: '0 30px' }}>{message}</div>
+        <div style={{ ...mono(26, 800), color: T.yellow }}>+{total} XP ⚡</div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center', padding: '0 16px' }}>
-          {gains.map(([k, label]) => (
-            <span key={k} style={{ ...mono(11, 600), color: T.green, background: T.greenSoft, padding: '5px 10px', borderRadius: 999 }}>{label}</span>
+          {gains.map(([label, x]) => (
+            <span key={label} style={{ ...mono(11, 600), color: T.yellow, background: T.yellowSoft, padding: '5px 10px', borderRadius: 999 }}>{label} +{x} XP</span>
           ))}
         </div>
         {passed && !isLast && (

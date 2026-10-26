@@ -107,3 +107,21 @@ button:disabled { cursor: default; }
 
 /* Guitar Pro–style document header strip */
 .fl-docbar { background: #2A2C30; border-bottom: 1px solid rgba(0,0,0,0.35); }
+
+/* ── Gamification motion ── */
+.fl-toast { animation: fl-toast-in .35s cubic-bezier(.2,1.2,.4,1) both; }
+@keyframes fl-toast-in { from { transform: translateX(40px) scale(.96); opacity: 0; } to { transform: none; opacity: 1; } }
+.fl-fadein { animation: fl-fade .25s ease-out both; }
+.fl-popin { animation: fl-pop-big .45s cubic-bezier(.2,1.4,.4,1) both; }
+@keyframes fl-pop-big { from { transform: scale(.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.fl-bounce { display: inline-block; animation: fl-bounce 1.2s ease-in-out infinite; }
+@keyframes fl-bounce { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-8px) scale(1.06); } }
+.fl-confetti { position: absolute; top: -20px; border-radius: 2px; animation-name: fl-fall; animation-timing-function: cubic-bezier(.25,.6,.4,1); animation-fill-mode: both; }
+@keyframes fl-fall { from { transform: translate(0, -20px) rotate(var(--rot)); opacity: 1; } to { transform: translate(var(--drift), 110vh) rotate(calc(var(--rot) + 540deg)); opacity: .9; } }
+.fl-pulse { animation: fl-pulse 1.6s ease-in-out infinite; }
+@keyframes fl-pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(232,49,42,.45); } 50% { box-shadow: 0 0 0 8px rgba(232,49,42,0); } }
+
+/* Wider screens: use the space */
+.fl-page { max-width: 1520px; }
+.fl-home { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+@media (min-width: 1500px) { .fl-home { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) minmax(0, 0.9fr); } }

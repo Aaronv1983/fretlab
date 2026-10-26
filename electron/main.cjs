@@ -2,7 +2,7 @@
 // Serves the Vite build from a privileged app:// origin so localStorage persists
 // between launches and the app runs in a secure context (Web Audio metronome).
 
-const { app, BrowserWindow, protocol, net, session, shell, Menu, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, protocol, net, session, shell, Menu, ipcMain, dialog, Notification, Tray } = require('electron');
 const path = require('node:path');
 const fs = require('node:fs');
 const { pathToFileURL } = require('node:url');
@@ -86,7 +86,19 @@ function createWindow() {
     },
   });
 
-  win.once('ready-to-show', () => win.show());
+  win.once('ready-to-show', () => { if (!startHidden) win.show(); });
+  // With reminders on, closing the window keeps FRETLAB in the tray
+  win.on('close', (e) => {
+    if (!quitting && reminderCfg.enabled && reminderCfg.background && tray) {
+      e.preventDefault();
+      win.hide();
+      if (!reminderState.trayHintShown) {
+        reminderState.trayHintShown = true;
+        saveReminderFiles();
+        notify('FRETLAB is still running', 'It stays in the system tray so your practice reminders arrive. Right-click the tray icon to quit.');
+      }
+    }
+  });
 
   // Links to anything outside the app open in the default browser
   win.webContents.setWindowOpenHandler(({ url }) => {
@@ -190,6 +202,17 @@ function registerIpc() {
     return shell.openPath(backupDir());
   });
 
+  ipcMain.handle('reminders:set', (e, cfg) => {
+    if (!fromApp(e) || !cfg || typeof cfg !== 'object') return;
+    reminderCfg = {
+      enabled: !!cfg.enabled, streakSaver: !!cfg.streakSaver, background: !!cfg.background, openAtLogin: !!cfg.openAtLogin,
+      time: /^\d{2}:\d{2}$/.test(cfg.time) ? cfg.time : '19:00',
+    };
+    saveReminderFiles();
+    applyReminderCfg();
+  });
+  ipcMain.handle('reminders:test', (e) => { if (fromApp(e)) checkReminders(true); });
+
   ipcMain.handle('app:info', (e) => {
     if (!fromApp(e)) return null;
     const latest = readSnapshot(progressFile());
@@ -197,12 +220,110 @@ function registerIpc() {
   });
 }
 
-app.on('second-instance', () => {
-  if (win) {
-    if (win.isMinimized()) win.restore();
-    win.focus();
+// ── Practice reminders (work while the window is closed, via the tray) ──
+const startHidden = process.argv.includes('--hidden');
+let quitting = false;
+let tray = null;
+let reminderCfg = { enabled: false, time: '19:00', streakSaver: true, background: true, openAtLogin: true };
+let reminderState = { daily: null, saver: null, trayHintShown: false };
+const reminderFile = () => path.join(app.getPath('userData'), 'reminders.json');
+
+function loadReminderFiles() {
+  try {
+    const j = JSON.parse(fs.readFileSync(reminderFile(), 'utf8'));
+    reminderCfg = { ...reminderCfg, ...(j.cfg || {}) };
+    reminderState = { ...reminderState, ...(j.state || {}) };
+  } catch { /* first run */ }
+}
+function saveReminderFiles() {
+  try { writeAtomic(reminderFile(), JSON.stringify({ cfg: reminderCfg, state: reminderState })); } catch { /* ignore */ }
+}
+function showWindow(navigateTo) {
+  if (!win) createWindow();
+  if (win.isMinimized()) win.restore();
+  win.show();
+  win.focus();
+  if (navigateTo) win.webContents.send('nav', navigateTo);
+}
+function notify(title, body, navigateTo) {
+  if (!Notification.isSupported()) return;
+  const n = new Notification({ title, body, icon: path.join(__dirname, '..', 'build', process.platform === 'win32' ? 'icon.ico' : 'icon.png'), silent: false });
+  n.on('click', () => showWindow(navigateTo));
+  n.show();
+}
+function applyReminderCfg() {
+  const wantTray = reminderCfg.enabled && reminderCfg.background;
+  if (wantTray && !tray) {
+    try {
+      tray = new Tray(path.join(__dirname, '..', 'build', process.platform === 'win32' ? 'icon.ico' : 'icon.png'));
+    } catch { tray = null; }
   }
-});
+  if (wantTray && tray && !tray.__menu) {
+    tray.__menu = true;
+    tray.setToolTip('FRETLAB — your daily guitar coach');
+    tray.setContextMenu(Menu.buildFromTemplate([
+      { label: 'Open FRETLAB', click: () => showWindow() },
+      { label: "Start today's practice", click: () => showWindow('practice') },
+      { type: 'separator' },
+      { label: 'Quit FRETLAB', click: () => { quitting = true; app.quit(); } },
+    ]));
+    tray.on('click', () => showWindow());
+  } else if (!wantTray && tray) {
+    tray.destroy();
+    tray = null;
+  }
+  if (app.isPackaged) {
+    app.setLoginItemSettings({ openAtLogin: !!(reminderCfg.enabled && reminderCfg.openAtLogin), args: ['--hidden'] });
+  }
+}
+
+// Today's status from the saved progress file (so it works even if the window was never opened)
+const localDay = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+function practiceStatus() {
+  const snap = readSnapshot(progressFile());
+  let g = {};
+  try { g = JSON.parse(snap?.data?.fretlab_gamify || '{}'); } catch { /* ignore */ }
+  const today = localDay();
+  const xpToday = (g.xpByDay || {})[today] || 0;
+  const goal = g.dailyGoal || 50;
+  const active = g.activeDays || {}, frozen = g.frozenDays || {};
+  let streak = 0;
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  for (let i = 0; i < 4000; i++) {
+    const k = localDay(d);
+    if (active[k]) streak++; else if (!frozen[k]) break;
+    d.setDate(d.getDate() - 1);
+  }
+  if (active[today]) streak++;
+  let name = '';
+  try { name = JSON.parse(snap?.data?.fretlab_settings || '{}').name || ''; } catch { /* ignore */ }
+  return { today, xpToday, goal, streak, practicedToday: !!active[today], name };
+}
+
+function checkReminders(force) {
+  if (!reminderCfg.enabled && !force) return;
+  const st = practiceStatus();
+  const now = new Date();
+  const [h, m] = reminderCfg.time.split(':').map(Number);
+  const due = now.getHours() * 60 + now.getMinutes() >= h * 60 + m;
+  const hi = st.name ? `${st.name}, ` : '';
+  if (force || (due && reminderState.daily !== st.today && st.xpToday < st.goal)) {
+    reminderState.daily = st.today;
+    saveReminderFiles();
+    if (st.practicedToday) notify('Almost there 🎯', `${hi}you're ${st.goal - st.xpToday} XP from today's goal. One more block should do it.`, 'practice');
+    else if (st.streak > 0) notify(`Keep your ${st.streak}-day streak 🔥`, `${hi}a quick session today keeps it alive.`, 'practice');
+    else notify('Time to practice 🎸', `${hi}your daily guitar session is ready — about 20 minutes.`, 'practice');
+    return;
+  }
+  if (reminderCfg.streakSaver && now.getHours() >= 21 && reminderState.saver !== st.today && st.streak > 0 && !st.practicedToday) {
+    reminderState.saver = st.today;
+    saveReminderFiles();
+    notify('Your streak ends at midnight ⏳', `${hi}practice for a few minutes to keep your ${st.streak}-day streak.`, 'practice');
+  }
+}
+
+app.on('second-instance', () => showWindow());
 
 app.whenReady().then(() => {
   // Minimal menu: keeps standard shortcuts (copy/paste, reload, zoom, fullscreen) without a visible bar
@@ -223,8 +344,13 @@ app.whenReady().then(() => {
 
   registerProtocol();
   registerIpc();
+  loadReminderFiles();
+  applyReminderCfg();
+  setTimeout(checkReminders, 15000);
+  setInterval(checkReminders, 60000);
   setPermissions();
   createWindow();
 });
 
-app.on('window-all-closed', () => app.quit());
+app.on('before-quit', () => { quitting = true; });
+app.on('window-all-closed', () => { if (!(reminderCfg.enabled && reminderCfg.background && tray)) app.quit(); });

@@ -7,6 +7,35 @@ import { Alert } from '../components/Overlays.jsx';
 import { FretboardView } from '../components/Fretboard.jsx';
 import TabScore from '../score/TabScore.jsx';
 import { bridge, snapshot, restoreSnapshot, flushBackup, onBackup, lastBackup } from '../services/backup.js';
+import { useGame } from '../game/GameProvider.jsx';
+import { DAILY_GOALS } from '../game/engine.js';
+
+export function GoalChoice({ value, onChange }) {
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 8 }}>
+      {DAILY_GOALS.map((d) => {
+        const on = value === d.xp;
+        return (
+          <button key={d.xp} className="fl-btn" onClick={() => onChange(d.xp)} style={{ padding: '12px 8px', borderRadius: 8, textAlign: 'center', background: on ? T.accentSoft : '#2A2C30', border: `1px solid ${on ? alpha(T.accent, 0.6) : T.borderLight}` }}>
+            <div style={{ ...sys(14, 800), color: on ? T.text : T.textSecondary }}>{d.name}</div>
+            <div style={{ ...mono(12, 800), color: on ? T.yellow : T.textMuted, marginTop: 4 }}>{d.xp} XP</div>
+            <div style={{ ...sys(10.5), color: T.textMuted, marginTop: 3 }}>{d.mins}</div>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+const TIMES = Array.from({ length: 34 }, (_, i) => { const m = 6 * 60 + i * 30; return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`; });
+export const fmt12 = (t) => { const [h, m] = t.split(':').map(Number); return `${((h + 11) % 12) + 1}:${String(m).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`; };
+export function TimeSelect({ value, onChange, disabled }) {
+  return (
+    <select value={value} disabled={disabled} onChange={(e) => onChange(e.target.value)} style={{ padding: '8px 10px', background: '#2A2C30', color: T.text, border: `1px solid ${T.borderLight}`, borderRadius: 6, ...sys(13), outline: 'none', opacity: disabled ? 0.5 : 1 }}>
+      {TIMES.map((t) => <option key={t} value={t}>{fmt12(t)}</option>)}
+    </select>
+  );
+}
 
 const card = { background: T.card, borderRadius: 8, border: `1px solid ${T.border}`, padding: 22, display: 'flex', flexDirection: 'column', gap: 14 };
 const label = { ...mono(10, 700), color: T.textMuted, letterSpacing: 1.5 };
@@ -54,7 +83,19 @@ export function HandChoice({ value, onChange }) {
   );
 }
 
-function Toggle({ on, onChange }) {
+function Row({ title, sub, control, disabled }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 14, opacity: disabled ? 0.45 : 1, pointerEvents: disabled ? 'none' : 'auto' }}>
+      <div style={{ flex: 1 }}>
+        <div style={{ ...sys(14, 600), color: T.text }}>{title}</div>
+        {sub && <div style={{ ...sys(12), color: T.textSecondary, marginTop: 2 }}>{sub}</div>}
+      </div>
+      {control}
+    </div>
+  );
+}
+
+export function Toggle({ on, onChange }) {
   return (
     <button className="fl-btn" onClick={() => onChange(!on)} aria-pressed={on} style={{ width: 44, height: 24, borderRadius: 12, background: on ? T.accent : '#55585F', position: 'relative', flexShrink: 0, transition: 'background .15s' }}>
       <span style={{ position: 'absolute', top: 3, left: on ? 23 : 3, width: 18, height: 18, borderRadius: 9, background: '#fff', transition: 'left .15s' }} />
@@ -66,6 +107,9 @@ const fmtTime = (iso) => { try { return new Date(iso).toLocaleString(); } catch 
 
 export default function Settings() {
   const st = useStore();
+  const g = useGame();
+  const rem = g.game.reminders;
+  const setRem = (patch) => g.updateGame({ reminders: { ...rem, ...patch }, remindersAsked: true });
   const s = st.settings;
   const [name, setName] = useState(s.name);
   const [info, setInfo] = useState(null);
@@ -126,6 +170,25 @@ export default function Settings() {
             </section>
 
             <section style={card}>
+              <div style={label}>DAILY GOAL</div>
+              <GoalChoice value={g.goal} onChange={(xp) => g.updateGame({ dailyGoal: xp })} />
+              <div style={{ ...sys(12), color: T.textSecondary }}>A full session (all blocks + checkpoint) earns about 100 XP. Practicing any amount keeps your streak alive.</div>
+            </section>
+
+            <section style={card}>
+              <div style={label}>REMINDERS</div>
+              <Row title="Daily practice reminder" sub="A Windows notification if you haven't hit your goal yet." control={<Toggle on={rem.enabled} onChange={(v) => setRem({ enabled: v })} />} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingLeft: 2 }}>
+                <span style={{ ...sys(13), color: rem.enabled ? T.text : T.textMuted }}>Remind me at</span>
+                <TimeSelect value={rem.time} disabled={!rem.enabled} onChange={(t) => setRem({ time: t })} />
+              </div>
+              <Row title="Streak saver" sub="An extra nudge at 9 PM if you haven't practiced and your streak is on the line." control={<Toggle on={rem.streakSaver} onChange={(v) => setRem({ streakSaver: v })} />} disabled={!rem.enabled} />
+              <Row title="Keep running in the system tray" sub="Closing the window keeps FRETLAB in the tray so reminders still arrive." control={<Toggle on={rem.background} onChange={(v) => setRem({ background: v })} />} disabled={!rem.enabled} />
+              <Row title="Start with Windows" sub="Opens quietly in the tray when you sign in." control={<Toggle on={rem.openAtLogin} onChange={(v) => setRem({ openAtLogin: v })} />} disabled={!rem.enabled} />
+              {bridge && <button className="fl-btn" disabled={!rem.enabled} onClick={() => bridge.testReminder?.()} style={{ alignSelf: 'flex-start', ...sys(12.5, 600), color: rem.enabled ? T.blue : T.textMuted, background: 'transparent', padding: 0 }}>Send a test notification</button>}
+            </section>
+
+            <section style={card}>
               <div style={label}>PLAYING HAND</div>
               <HandChoice value={s.leftHanded} onChange={(v) => st.updateSettings({ leftHanded: v })} />
               <div style={{ ...sys(12), color: T.textSecondary }}>Fretboard diagrams and the quiz fretboard are mirrored for left-handed players. Tab and notation read the same either way.</div>
@@ -134,6 +197,22 @@ export default function Settings() {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            <section style={card}>
+              <div style={label}>APP</div>
+              <Row title="Sound effects" sub="Chimes for XP, correct answers, goals and achievements." control={<Toggle on={g.game.sound} onChange={(v) => g.updateGame({ sound: v })} />} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ ...sys(14, 600), color: T.text }}>Interface size</div>
+                  <div style={{ ...sys(12), color: T.textSecondary, marginTop: 2 }}>Auto grows everything on large or maximized windows.</div>
+                </div>
+                <div style={{ display: 'flex', gap: 4, background: '#2A2C30', borderRadius: 8, padding: 3, border: `1px solid ${T.borderLight}` }}>
+                  {[['auto', 'Auto'], [1, '100%'], [1.25, '125%'], [1.5, '150%']].map(([v, l]) => (
+                    <button key={l} className="fl-btn" onClick={() => st.updateSettings({ uiScale: v })} style={{ ...sys(12, 700), padding: '6px 10px', borderRadius: 6, color: s.uiScale === v ? '#fff' : T.textSecondary, background: s.uiScale === v ? T.accent : 'transparent' }}>{l}</button>
+                  ))}
+                </div>
+              </div>
+            </section>
+
             <section style={card}>
               <div style={label}>SCORE DISPLAY</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>

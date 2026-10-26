@@ -5,6 +5,8 @@ import { useStore } from '../store.jsx';
 import { metronome } from '../services/metronome.js';
 import { FretboardView } from '../components/Fretboard.jsx';
 import TabScore from '../score/TabScore.jsx';
+import { useGame } from '../game/GameProvider.jsx';
+import { XP } from '../game/engine.js';
 import Icon from '../components/Icon.jsx';
 
 export function useMetronome() {
@@ -34,6 +36,7 @@ const card = { background: T.card, borderRadius: 12, border: `1px solid ${T.bord
 
 export default function Session({ go }) {
   const st = useStore();
+  const g = useGame();
   const routine = st.currentRoutine;
   const blocks = routine?.sessionBlocks || [];
   const timer = useSessionTimer();
@@ -49,6 +52,12 @@ export default function Session({ go }) {
   const isBlockLocked = (i) => i !== 0 && !completedBlocks.has(i - 1);
 
   const completeAndAdvance = () => {
+    if (!completedBlocks.has(activeBlockIndex)) {
+      const b = blocks[activeBlockIndex];
+      const cheers = ['Nice work!', 'Clean!', 'Keep it rolling!', 'Locked in!', 'That\'s how it\'s done!'];
+      g.earn(XP.block, `${BLOCK[b.type].name} complete · ${cheers[(activeBlockIndex + completedBlocks.size) % cheers.length]}`);
+      g.bump('blocks');
+    }
     setCompletedBlocks((s) => new Set(s).add(activeBlockIndex));
     const idx = activeBlockIndex;
     advanceRef.current = setTimeout(() => {

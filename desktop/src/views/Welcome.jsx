@@ -3,18 +3,26 @@ import { useState } from 'react';
 import { T, mono, sys } from '../theme.js';
 import { useStore } from '../store.jsx';
 import { FretboardView } from '../components/Fretboard.jsx';
-import { HandChoice, PREVIEW_CHORD } from './Settings.jsx';
+import { HandChoice, PREVIEW_CHORD, GoalChoice, Toggle, TimeSelect } from './Settings.jsx';
+import { useGame } from '../game/GameProvider.jsx';
 
 export default function Welcome() {
   const st = useStore();
+  const g = useGame();
+  const [goal, setGoal] = useState(g.game.dailyGoal);
+  const [remind, setRemind] = useState(true);
+  const [time, setTime] = useState(g.game.reminders.time);
   const [name, setName] = useState(st.settings.name || '');
   const [lefty, setLefty] = useState(!!st.settings.leftHanded);
 
-  const finish = () => st.updateSettings({ name: name.trim(), leftHanded: lefty, onboarded: true });
+  const finish = () => {
+    g.updateGame({ dailyGoal: goal, remindersAsked: true, reminders: { ...g.game.reminders, enabled: remind, time } });
+    st.updateSettings({ name: name.trim(), leftHanded: lefty, onboarded: true });
+  };
 
   return (
     <div style={{ position: 'absolute', inset: 0, zIndex: 70, background: T.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', overflowY: 'auto' }}>
-      <div style={{ width: 'min(620px, 92%)', display: 'flex', flexDirection: 'column', gap: 22, padding: '32px 0' }}>
+      <div style={{ width: 'min(660px, 92%)', display: 'flex', flexDirection: 'column', gap: 20, padding: '28px 0', margin: 'auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           <img src="./icon.png" alt="" width={52} height={52} style={{ borderRadius: 10 }} />
           <div>
@@ -33,7 +41,19 @@ export default function Welcome() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <span style={{ ...sys(14, 600), color: T.text }}>Do you play right- or left-handed?</span>
           <HandChoice value={lefty} onChange={(v) => { setLefty(v); st.updateSettings({ leftHanded: v }); }} />
-          <FretboardView diagram={PREVIEW_CHORD} />
+          <div style={{ maxHeight: 200, overflow: 'hidden' }}><FretboardView diagram={PREVIEW_CHORD} /></div>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <span style={{ ...sys(14, 600), color: T.text }}>Pick a daily goal</span>
+          <GoalChoice value={goal} onChange={setGoal} />
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: '#2A2C30', borderRadius: 8, border: `1px solid ${T.borderLight}` }}>
+          <span style={{ fontSize: 20 }}>⏰</span>
+          <span style={{ ...sys(14, 600), color: T.text, flex: 1 }}>Remind me to practice every day at</span>
+          <TimeSelect value={time} onChange={setTime} disabled={!remind} />
+          <Toggle on={remind} onChange={setRemind} />
         </div>
 
         <button className="fl-btn" onClick={finish} style={{ ...mono(15, 700), color: '#fff', background: T.accent, padding: '15px 0', borderRadius: 6 }}>

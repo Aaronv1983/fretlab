@@ -4,6 +4,8 @@ import { T, mono, sys, alpha } from '../theme.js';
 import { useStore } from '../store.jsx';
 import { FretboardView } from '../components/Fretboard.jsx';
 import TabScore from '../score/TabScore.jsx';
+import { useGame } from '../game/GameProvider.jsx';
+import { XP } from '../game/engine.js';
 import { modelFromPositions } from '../score/parseTab.js';
 import Icon from '../components/Icon.jsx';
 import { Sheet, NavButton } from '../components/Overlays.jsx';
@@ -54,6 +56,7 @@ const findRootFret = (root) => {
 
 export default function ScaleLibrary() {
   const st = useStore();
+  const g = useGame();
   const [category, setCategory] = useState('metal');
   const [selectedId, setSelectedId] = useState(null);
   const [root, setRoot] = useState('E');
@@ -180,7 +183,7 @@ export default function ScaleLibrary() {
       </div>
       </div>
 
-      <AddCustomScaleSheet open={showAdd} onClose={() => setShowAdd(false)} onSave={(s) => { st.addCustomScale(s); setShowAdd(false); }} />
+      <AddCustomScaleSheet open={showAdd} onClose={() => setShowAdd(false)} onSave={(s) => { st.addCustomScale(s); g.earn(XP.customScale, 'Custom scale created'); setShowAdd(false); }} />
     </div>
   );
 }

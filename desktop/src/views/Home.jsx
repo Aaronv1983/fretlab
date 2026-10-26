@@ -5,12 +5,17 @@ import { useStore, routineMinutes } from '../store.jsx';
 import { ProgressRing, SkillRadarChart, StreakBadge } from '../components/Charts.jsx';
 import Icon from '../components/Icon.jsx';
 import { Alert } from '../components/Overlays.jsx';
+import { useGame } from '../game/GameProvider.jsx';
+import { GoalRing, WeekStrip, LevelBar, FreezeBadge, goalName } from '../game/GameUI.jsx';
+import { useMediaQuery } from '../services/useMediaQuery.js';
 
 const sectionLabel = { ...mono(10, 700), color: T.textMuted, letterSpacing: 1.5 };
 const card = { background: T.card, borderRadius: 16, border: `1px solid ${T.border}` };
 
 export default function Home({ go }) {
   const st = useStore();
+  const g = useGame();
+  const wide = useMediaQuery('(min-width: 1500px)');
   const r = st.currentRoutine;
   const [animateIn, setAnimateIn] = useState(false);
   const [toolAlert, setToolAlert] = useState(null);
@@ -40,10 +45,34 @@ export default function Home({ go }) {
             <div style={{ ...sys(28, 800), color: T.text }}>{st.settings.name || 'Welcome back'}</div>
           </div>
           <div style={{ flex: 1 }} />
-          <StreakBadge count={st.streak} />
+          <StreakBadge count={g.streak} />
         </div>
 
-        <div className="fl-grid-2">
+        {/* Coach */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '16px 20px', marginBottom: 22, background: g.coach.tone === 'risk' ? T.accentSoft : g.coach.tone === 'done' ? T.greenSoft : T.card, border: `1px solid ${g.coach.tone === 'risk' ? alpha(T.accent, 0.5) : g.coach.tone === 'done' ? alpha(T.green, 0.4) : T.border}`, borderRadius: 12 }}>
+          <div className={g.coach.tone === 'risk' ? 'fl-bounce' : ''} style={{ width: 46, height: 46, borderRadius: 23, background: '#2A2C30', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, flexShrink: 0 }}>{g.coach.tone === 'risk' ? '🔥' : g.coach.tone === 'done' ? '🎉' : '🎸'}</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ ...mono(9, 700), color: T.textMuted, letterSpacing: 1.5 }}>YOUR COACH</div>
+            <div style={{ ...sys(15, 600), color: T.text, marginTop: 3 }}>{g.coach.text}</div>
+          </div>
+          {g.coach.tone !== 'done' ? (
+            <button className="fl-btn" onClick={() => go('practice')} style={{ ...mono(13, 800), color: '#fff', background: T.accent, padding: '11px 20px', borderRadius: 8, whiteSpace: 'nowrap' }}>Practice now →</button>
+          ) : st.dueCount > 0 ? (
+            <button className="fl-btn" onClick={() => go('quiz')} style={{ ...mono(13, 800), color: '#fff', background: T.purple, padding: '11px 20px', borderRadius: 8, whiteSpace: 'nowrap' }}>Review →</button>
+          ) : null}
+        </div>
+
+        {/* One-time reminder opt-in (for people who skipped it at setup) */}
+        {!g.game.reminders.enabled && !g.game.remindersAsked && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 20px', marginBottom: 22, background: T.blueSoft, border: `1px solid ${alpha(T.blue, 0.4)}`, borderRadius: 12 }}>
+            <span style={{ fontSize: 22 }}>⏰</span>
+            <div style={{ flex: 1, ...sys(14), color: T.text }}>Want a nudge to practice? FRETLAB can remind you each day and warn you before your streak breaks.</div>
+            <button className="fl-btn" onClick={() => g.updateGame({ remindersAsked: true, reminders: { ...g.game.reminders, enabled: true } })} style={{ ...mono(12, 800), color: '#fff', background: T.blue, padding: '9px 16px', borderRadius: 8, whiteSpace: 'nowrap' }}>Remind me at 7:00 PM</button>
+            <button className="fl-btn" onClick={() => g.updateGame({ remindersAsked: true })} style={{ ...sys(13, 600), color: T.textSecondary, padding: '9px 10px' }}>Not now</button>
+          </div>
+        )}
+
+        <div className="fl-home">
           {/* ── Left column ── */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
             {/* Today's session */}
@@ -135,8 +164,52 @@ export default function Home({ go }) {
               </div>
             </div>
           </div>
+          {wide ? (<>
+          {/* ── Progress column (Duolingo-style) ── */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={sectionLabel}>DAILY GOAL</div>
+              <div style={{ ...card, padding: 22, display: 'flex', flexDirection: 'column', gap: 18 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+                  <GoalRing size={118} />
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <div style={{ ...sys(17, 800), color: g.goalMet ? T.green : T.text }}>{g.goalMet ? 'Goal complete!' : `${g.goal - g.xpToday} XP to go`}</div>
+                    <div style={{ ...sys(12), color: T.textSecondary }}>{goalName(g.goal)} goal · {g.goal} XP a day</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, ...mono(12, 800), color: g.atRisk ? T.textSecondary : T.accent, background: g.atRisk ? 'rgba(255,255,255,0.05)' : T.accentSoft, padding: '4px 10px', borderRadius: 999 }}>🔥 {g.streak}-day streak</span>
+                      <FreezeBadge />
+                    </div>
+                  </div>
+                </div>
+                <WeekStrip />
+              </div>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={sectionLabel}>LEVEL</div>
+              <div className="fl-press" onClick={() => go('achievements')} style={{ ...card, padding: 20, display: 'flex', flexDirection: 'column', gap: 16, cursor: 'pointer' }}>
+                <LevelBar />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div style={{ ...mono(9, 700), color: T.textMuted, letterSpacing: 1.5 }}>NEXT ACHIEVEMENTS</div>
+                  {g.achievements.filter((a) => !a.done).sort((a, b) => b.progress / b.target - a.progress / a.target).slice(0, 3).map((a) => (
+                    <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <span style={{ width: 34, height: 34, borderRadius: 17, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, background: 'rgba(255,255,255,0.05)', filter: 'grayscale(1)' }}>{a.icon}</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                          <span style={{ ...sys(13, 700), color: T.text }}>{a.title}</span>
+                          <span style={{ ...mono(10), color: T.textMuted }}>{a.progress}/{a.target}</span>
+                        </div>
+                        <div style={{ height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.06)', marginTop: 5 }}>
+                          <div style={{ height: '100%', borderRadius: 2, width: `${(a.progress / a.target) * 100}%`, background: T.blue }} />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
 
-          {/* ── Right column ── */}
+          {/* ── Skills column ── */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div style={sectionLabel}>SKILL RADAR</div>
@@ -148,7 +221,7 @@ export default function Home({ go }) {
               <div style={sectionLabel}>PRACTICE STATS</div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
                 {[
-                  ['STREAK', `${st.streak}`, 'days', T.yellow],
+                  ['BEST STREAK', `${g.game.bestStreak}`, 'days', T.yellow],
                   ['PRACTICE', `${Math.floor(st.totalPracticeMinutes / 60)}h ${st.totalPracticeMinutes % 60}m`, 'total', T.green],
                   ['WEEKS', `${st.courses.flatMap((c) => c.routines).filter((x) => st.isRoutineMastered(x.id)).length}/30`, 'mastered', T.accent],
                 ].map(([label, value, sub, color]) => (
@@ -161,6 +234,79 @@ export default function Home({ go }) {
               </div>
             </div>
           </div>
+          </>) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          {/* ── Progress column (Duolingo-style) ── */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={sectionLabel}>DAILY GOAL</div>
+              <div style={{ ...card, padding: 22, display: 'flex', flexDirection: 'column', gap: 18 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+                  <GoalRing size={118} />
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <div style={{ ...sys(17, 800), color: g.goalMet ? T.green : T.text }}>{g.goalMet ? 'Goal complete!' : `${g.goal - g.xpToday} XP to go`}</div>
+                    <div style={{ ...sys(12), color: T.textSecondary }}>{goalName(g.goal)} goal · {g.goal} XP a day</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, ...mono(12, 800), color: g.atRisk ? T.textSecondary : T.accent, background: g.atRisk ? 'rgba(255,255,255,0.05)' : T.accentSoft, padding: '4px 10px', borderRadius: 999 }}>🔥 {g.streak}-day streak</span>
+                      <FreezeBadge />
+                    </div>
+                  </div>
+                </div>
+                <WeekStrip />
+              </div>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={sectionLabel}>LEVEL</div>
+              <div className="fl-press" onClick={() => go('achievements')} style={{ ...card, padding: 20, display: 'flex', flexDirection: 'column', gap: 16, cursor: 'pointer' }}>
+                <LevelBar />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div style={{ ...mono(9, 700), color: T.textMuted, letterSpacing: 1.5 }}>NEXT ACHIEVEMENTS</div>
+                  {g.achievements.filter((a) => !a.done).sort((a, b) => b.progress / b.target - a.progress / a.target).slice(0, 3).map((a) => (
+                    <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <span style={{ width: 34, height: 34, borderRadius: 17, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, background: 'rgba(255,255,255,0.05)', filter: 'grayscale(1)' }}>{a.icon}</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                          <span style={{ ...sys(13, 700), color: T.text }}>{a.title}</span>
+                          <span style={{ ...mono(10), color: T.textMuted }}>{a.progress}/{a.target}</span>
+                        </div>
+                        <div style={{ height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.06)', marginTop: 5 }}>
+                          <div style={{ height: '100%', borderRadius: 2, width: `${(a.progress / a.target) * 100}%`, background: T.blue }} />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Skills column ── */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={sectionLabel}>SKILL RADAR</div>
+              <div style={{ ...card, display: 'flex', justifyContent: 'center', padding: '28px 12px' }}>
+                <SkillRadarChart data={st.skillRadarData} size={300} />
+              </div>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={sectionLabel}>PRACTICE STATS</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+                {[
+                  ['BEST STREAK', `${g.game.bestStreak}`, 'days', T.yellow],
+                  ['PRACTICE', `${Math.floor(st.totalPracticeMinutes / 60)}h ${st.totalPracticeMinutes % 60}m`, 'total', T.green],
+                  ['WEEKS', `${st.courses.flatMap((c) => c.routines).filter((x) => st.isRoutineMastered(x.id)).length}/30`, 'mastered', T.accent],
+                ].map(([label, value, sub, color]) => (
+                  <div key={label} style={{ ...card, borderRadius: 14, padding: 16 }}>
+                    <div style={{ ...mono(9, 700), color: T.textMuted, letterSpacing: 1.5 }}>{label}</div>
+                    <div style={{ ...mono(20, 700), color, marginTop: 6 }}>{value}</div>
+                    <div style={{ ...sys(11), color: T.textSecondary }}>{sub}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+            </div>
+          )}
         </div>
       </div>
 

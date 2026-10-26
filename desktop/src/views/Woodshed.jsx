@@ -7,6 +7,8 @@ import Icon from '../components/Icon.jsx';
 import { Sheet, NavButton } from '../components/Overlays.jsx';
 import { useMetronome } from './Session.jsx';
 import TabScore from '../score/TabScore.jsx';
+import { useGame } from '../game/GameProvider.jsx';
+import { XP, dayKey } from '../game/engine.js';
 
 const DIFF = {
   beginner: ['Beginner', T.green], intermediate: ['Intermediate', T.blue], advanced: ['Advanced', T.purple], expert: ['Expert', T.red],
@@ -143,6 +145,7 @@ const field = { width: '100%', boxSizing: 'border-box', padding: 14, background:
 
 function NewProjectSheet({ open, onClose }) {
   const st = useStore();
+  const g = useGame();
   const [title, setTitle] = useState('');
   const [artist, setArtist] = useState('');
   const [targetBPM, setTargetBPM] = useState('120');
@@ -177,7 +180,8 @@ function NewProjectSheet({ open, onClose }) {
     const tabLines = inputMode === 0 && image ? PHOTO_PLACEHOLDER_TAB : manualTab.replace(/\r/g, '').split('\n');
     const bpm = parseInt(targetBPM, 10) || 120;
     setTimeout(() => {
-      st.createProject({ title, artist, tabLines, targetBPM: bpm });
+      const p = st.createProject({ title, artist, tabLines, targetBPM: bpm });
+      g.earn(XP.newSolo, 'New solo added', { once: `solo:${p.id}` });
       close();
     }, 1000);
   };
@@ -252,6 +256,7 @@ function NewProjectSheet({ open, onClose }) {
 
 function SoloDetail({ project, onBack }) {
   const st = useStore();
+  const g = useGame();
   const m = useMetronome();
   const [idx, setIdx] = useState(0);
   const [dName, dColor] = DIFF[project.difficulty];
@@ -344,7 +349,7 @@ function SoloDetail({ project, onBack }) {
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
                   {[25, 50, 75, 100].map((pct) => (
-                    <button key={pct} className="fl-btn" onClick={() => { st.updateChunkTempo(chunk.id, project.id, pct); m.setBPM(Math.trunc((pct * project.targetBPM) / 100)); }}
+                    <button key={pct} className="fl-btn" onClick={() => { st.updateChunkTempo(chunk.id, project.id, pct); g.earn(XP.chunkTempo, `Chunk practice at ${pct}%`, { once: `tempo:${chunk.id}:${pct}:${dayKey()}` }); m.setBPM(Math.trunc((pct * project.targetBPM) / 100)); }}
                       style={{ flex: 1, ...mono(12, 700), padding: '10px 0', borderRadius: 8, border: `1px solid ${T.border}`, color: chunk.currentTempoPct === pct ? '#fff' : T.textSecondary, background: chunk.currentTempoPct === pct ? T.accent : T.card }}>{pct}%</button>
                   ))}
                 </div>
@@ -355,10 +360,10 @@ function SoloDetail({ project, onBack }) {
               </div>
 
               <div style={{ display: 'flex', gap: 10 }}>
-                <button className="fl-btn" onClick={() => st.markChunkMastered(chunk.id, project.id)} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, ...mono(12, 700), padding: '12px 0', borderRadius: 10, color: chunk.isMastered ? T.green : T.text, background: chunk.isMastered ? T.greenSoft : T.card, border: `1px solid ${chunk.isMastered ? alpha(T.green, 0.3) : T.border}` }}>
+                <button className="fl-btn" onClick={() => { st.markChunkMastered(chunk.id, project.id); g.earn(XP.chunkMastered, 'Chunk mastered', { once: `chunkm:${chunk.id}` }); }} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, ...mono(12, 700), padding: '12px 0', borderRadius: 10, color: chunk.isMastered ? T.green : T.text, background: chunk.isMastered ? T.greenSoft : T.card, border: `1px solid ${chunk.isMastered ? alpha(T.green, 0.3) : T.border}` }}>
                   <Icon name={chunk.isMastered ? 'checkCircleFill' : 'checkCircle'} size={14} color={chunk.isMastered ? T.green : T.text} /> {chunk.isMastered ? 'Mastered' : 'Mark Mastered'}
                 </button>
-                <button className="fl-btn" onClick={() => st.saveToLickLibrary(chunk, project)} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, ...mono(12, 700), padding: '12px 0', borderRadius: 10, color: chunk.isFavorite ? T.red : T.text, background: chunk.isFavorite ? T.redSoft : T.card, border: `1px solid ${chunk.isFavorite ? alpha(T.red, 0.3) : T.border}` }}>
+                <button className="fl-btn" onClick={() => { st.saveToLickLibrary(chunk, project); g.earn(XP.lick, 'Lick saved', { once: `lick:${chunk.id}` }); }} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, ...mono(12, 700), padding: '12px 0', borderRadius: 10, color: chunk.isFavorite ? T.red : T.text, background: chunk.isFavorite ? T.redSoft : T.card, border: `1px solid ${chunk.isFavorite ? alpha(T.red, 0.3) : T.border}` }}>
                   <Icon name={chunk.isFavorite ? 'heartFill' : 'heart'} size={14} color={chunk.isFavorite ? T.red : T.text} /> Save Lick
                 </button>
               </div>

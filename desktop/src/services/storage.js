@@ -13,6 +13,7 @@ export const KEYS = {
   currentRoutine: 'fretlab_current_routine',
   currentDay: 'fretlab_current_day',
   settings: 'fretlab_settings',
+  gamify: 'fretlab_gamify',
 };
 
 export function load(key, fallback) {

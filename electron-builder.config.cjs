@@ -17,6 +17,7 @@ module.exports = {
     'dist-desktop/**/*',
     'electron/**/*',
     'build/icon.ico',
+    'build/icon.png',
     'package.json',
     '!**/node_modules/**', // everything is bundled into dist-desktop by Vite
   ],
