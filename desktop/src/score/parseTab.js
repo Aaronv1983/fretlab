@@ -57,7 +57,21 @@ function labelGroup(group) {
     for (let k = 0; k + n <= 6; k++) {
       if (parsed.every((p, j) => p.letter === SEQ[k + j])) { start = k; break; }
     }
-    if (start < 0) start = 0;
+  }
+  if (n === 6 && start === 0 && !parsed.every((p, j) => p.letter === SEQ[j])) start = -1;
+  if (start < 0) {
+    // Low string written on top (E, A, D, G, B, e): standard order reversed
+    const REV = ['e', 'a', 'd', 'g', 'b', 'e'];
+    for (let k = 0; k + n <= 6; k++) {
+      if (parsed.every((p, j) => p.letter === REV[k + j])) {
+        return parsed.map((p, j) => ({ string: 5 - (k + j), body: p.body, note: p.note }));
+      }
+    }
+  }
+  if (start < 0) {
+    // Rows not in standard top-to-bottom order (e.g. D above G): map each row by its own string letter
+    const byLetter = { b: 1, g: 2, d: 3, a: 4 };
+    return parsed.map((p) => ({ string: p.letter === 'e' ? (p.upper ? 5 : 0) : byLetter[p.letter], body: p.body, note: p.note }));
   }
   return parsed.map((p, j) => ({ string: Math.min(5, start + j), body: p.body, note: p.note }));
 }
@@ -65,6 +79,8 @@ function labelGroup(group) {
 export function parseGroup(strings) {
   const N = Math.max(1, ...strings.map((s) => s.body.length));
   const notes = [];
+  // Some lessons use "P = pick, H = hammer, PO = pull-off": there a lone P is a pick stroke, not a pull-off
+  const pickNotation = strings.some((s) => /PO\d/.test(s.body));
   for (const { string, body } of strings) {
     const b = body.padEnd(N, '-');
     for (let i = 0; i < b.length; i++) {
@@ -81,7 +97,7 @@ export function parseGroup(strings) {
       if (b[j] === ')' || b[j] === '>') j++;
       const m = b[j];
       if (m === 'h' || m === 'H') note.leg = 'H';
-      else if (m === 'p' || m === 'P') note.leg = 'P';
+      else if ((m === 'p' || m === 'P') && !(pickNotation && b[j + 1] !== 'O' && m === 'P')) note.leg = 'P';
       else if (m === '/' || m === '\\') note.slide = m;
       else if (m === '~') note.vib = true;
       else if (m === '*') note.harm = true;
@@ -104,9 +120,14 @@ export function parseGroup(strings) {
       }
       // Legato written before the target note ("-P5"): attach to the previous note on this string
       const pre = b[i - 1];
-      if ((pre === 'h' || pre === 'H' || pre === 'p' || pre === 'P')) {
+      let preLeg = null;
+      if (pickNotation) {
+        if (pre === 'O' && b[i - 2] === 'P') preLeg = 'P';
+        else if (pre === 'h' || pre === 'H') preLeg = 'H';
+      } else if (pre === 'h' || pre === 'H' || pre === 'p' || pre === 'P') preLeg = pre.toUpperCase();
+      if (preLeg) {
         for (let k = notes.length - 1; k >= 0; k--) {
-          if (notes[k].string === string) { if (!notes[k].leg) notes[k].leg = pre.toUpperCase(); break; }
+          if (notes[k].string === string) { if (!notes[k].leg) notes[k].leg = preLeg; break; }
         }
       }
       notes.push(note);
