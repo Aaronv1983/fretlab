@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { T, mono, sys, BLOCK, blockColor, alpha } from '../theme.js';
 import { useStore } from '../store.jsx';
-import { metronome } from '../services/metronome.js';
+import { metronome, SUBDIVISIONS, detectSubdivision } from '../services/metronome.js';
 import { FretboardView } from '../components/Fretboard.jsx';
 import TabScore from '../score/TabScore.jsx';
 import { useGame } from '../game/GameProvider.jsx';
@@ -47,7 +47,11 @@ export default function Session({ go }) {
   const advanceRef = useRef(null);
 
   // onDisappear: stop metronome, pause timer
-  useEffect(() => () => { metronome.stop(); clearTimeout(advanceRef.current); }, []);
+  useEffect(() => () => { metronome.stop(); metronome.setSubdivision(1); clearTimeout(advanceRef.current); }, []);
+
+  // Match the click to how the current exercise is counted (quarters, 1-&, 1-e-&-a, triplets)
+  const curEx = blocks[activeBlockIndex]?.exercises?.[activeExerciseIndex];
+  useEffect(() => { metronome.setSubdivision(detectSubdivision(curEx)); }, [curEx?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const isBlockLocked = (i) => i !== 0 && !completedBlocks.has(i - 1);
 
@@ -185,7 +189,8 @@ export default function Session({ go }) {
           </div>
         </div>
         {activeBlockIndex < 3 && (
-          <div style={{ ...card, display: 'flex', alignItems: 'center', gap: 14, padding: 18 }}>
+          <div style={{ ...card, display: 'flex', flexDirection: 'column', gap: 14, padding: 18 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1 }}>
               <span style={{ ...mono(8), color: T.textMuted, letterSpacing: 1 }}>BPM</span>
               <span style={{ ...mono(34, 700), color: T.text }}>{m.bpm}</span>
@@ -197,6 +202,9 @@ export default function Session({ go }) {
             <button className="fl-btn" onClick={() => m.toggle()} style={{ width: 48, height: 48, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: m.isPlaying ? T.redSoft : T.greenSoft }}>
               <Icon name={m.isPlaying ? 'stop' : 'play'} size={18} color={m.isPlaying ? T.red : T.green} />
             </button>
+          </div>
+          <SubdivisionPicker m={m} />
+          <BeatLights m={m} />
           </div>
         )}
               <div style={{ ...card, padding: 18, display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -217,6 +225,48 @@ export default function Session({ go }) {
       </div>
       </div>
       </div>
+    </div>
+  );
+}
+
+export function SubdivisionPicker({ m }) {
+  const cur = SUBDIVISIONS.find((x) => x.value === m.subdivision) || SUBDIVISIONS[0];
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+        <span style={{ ...mono(8), color: T.textMuted, letterSpacing: 1 }}>CLICK</span>
+        <span style={{ ...mono(9), color: T.textSecondary }}>{cur.name} · {cur.count.join(' ')}</span>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4, padding: 3, borderRadius: 8, background: 'rgba(255,255,255,0.03)', border: `1px solid ${T.border}` }}>
+        {SUBDIVISIONS.map((x) => {
+          const on = x.value === m.subdivision;
+          return (
+            <button key={x.value} className="fl-btn" title={x.name} onClick={() => m.setSubdivision(x.value)}
+              style={{ padding: '6px 0', borderRadius: 6, ...sys(14, 700), color: on ? '#fff' : T.textSecondary, background: on ? T.accent : 'transparent' }}>
+              {x.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// One group per beat; the big light is the beat (beat 1 accented), the small ones are the subdivisions
+export function BeatLights({ m }) {
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: `repeat(${m.beatsPerMeasure}, 1fr)`, gap: 6 }}>
+      {Array.from({ length: m.beatsPerMeasure }, (_, b) => (
+        <div key={b} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, padding: '6px 0', borderRadius: 6, background: 'rgba(255,255,255,0.03)' }}>
+          {Array.from({ length: m.subdivision }, (_, s) => {
+            const lit = m.isPlaying && m.currentBeat === b + 1 && m.currentSub === s;
+            const big = s === 0;
+            const col = big && b === 0 ? T.accent : big ? T.green : T.blue;
+            const sz = big ? 12 : 7;
+            return <div key={s} style={{ width: sz, height: sz, borderRadius: sz, background: lit ? col : 'rgba(255,255,255,0.12)', boxShadow: lit ? `0 0 8px ${col}` : 'none', transition: 'background .05s' }} />;
+          })}
+        </div>
+      ))}
     </div>
   );
 }

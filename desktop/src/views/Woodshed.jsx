@@ -5,7 +5,7 @@ import { useStore } from '../store.jsx';
 import { keyDisplayName } from '../services/tabParser.js';
 import Icon from '../components/Icon.jsx';
 import { Sheet, NavButton } from '../components/Overlays.jsx';
-import { useMetronome } from './Session.jsx';
+import { useMetronome, SubdivisionPicker, BeatLights } from './Session.jsx';
 import TabScore from '../score/TabScore.jsx';
 import { useGame } from '../game/GameProvider.jsx';
 import { XP, dayKey } from '../game/engine.js';
@@ -357,6 +357,8 @@ function SoloDetail({ project, onBack }) {
                   style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, ...mono(13, 700), padding: '12px 0', borderRadius: 10, color: m.isPlaying ? T.red : T.green, background: m.isPlaying ? T.redSoft : T.greenSoft }}>
                   <Icon name={m.isPlaying ? 'stop' : 'metronome'} size={14} color={m.isPlaying ? T.red : T.green} /> {m.isPlaying ? 'Stop Metronome' : 'Start Metronome'}
                 </button>
+                <SubdivisionPicker m={m} />
+                {m.isPlaying && <BeatLights m={m} />}
               </div>
 
               <div style={{ display: 'flex', gap: 10 }}>
