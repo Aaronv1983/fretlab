@@ -222,6 +222,20 @@ export default function Settings() {
                 </div>
                 <Toggle on={s.showNotation} onChange={(v) => st.updateSettings({ showNotation: v })} />
               </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ ...sys(14, 600), color: T.text }}>Pick direction</div>
+                  <div style={{ ...sys(12), color: T.textSecondary, marginTop: 2 }}>⊓ downstroke and V upstroke above each picked note. Hammer-ons, pull-offs and slides are not picked.</div>
+                </div>
+                <Toggle on={s.showPicking !== false} onChange={(v) => st.updateSettings({ showPicking: v })} />
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ ...sys(14, 600), color: T.text }}>Finger numbers</div>
+                  <div style={{ ...sys(12), color: T.textSecondary, marginTop: 2 }}>Fretting-hand finger for each note (1 index, 2 middle, 3 ring, 4 pinky), one finger per fret in each position.</div>
+                </div>
+                <Toggle on={s.showFingering !== false} onChange={(v) => st.updateSettings({ showFingering: v })} />
+              </div>
               <TabScore lines={PREVIEW_TAB} compact />
             </section>
 

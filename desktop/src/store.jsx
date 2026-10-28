@@ -7,7 +7,7 @@ import * as parser from './services/tabParser.js';
 import { SKILL_NAME, SKILL_THREADS } from './theme.js';
 import { scheduleBackup } from './services/backup.js';
 
-export const DEFAULT_SETTINGS = { name: '', leftHanded: false, showNotation: true, onboarded: false, uiScale: 'auto' };
+export const DEFAULT_SETTINGS = { name: '', leftHanded: false, showNotation: true, showPicking: true, showFingering: true, onboarded: false, uiScale: 'auto' };
 
 const Ctx = createContext(null);
 export const useStore = () => useContext(Ctx);

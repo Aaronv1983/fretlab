@@ -6,6 +6,7 @@ import { useStore } from '../store.jsx';
 import { useWidth } from '../components/Fretboard.jsx';
 import { GLYPHS } from './glyphs.js';
 import { splitTabText, OPEN_MIDI } from './parseTab.js';
+import { annotateTechnique, pickingStyle, strokeRuleFromText } from './technique.js';
 
 export const PAPER = {
   bg: '#F7F7F5', ink: '#151515', line: '#3F3F3F', tabLine: '#7A7A7A', soft: '#6B6B6B', red: '#D0302A', shadow: '0 1px 0 rgba(0,0,0,.35), 0 8px 24px rgba(0,0,0,.28)',
@@ -53,8 +54,8 @@ const glyphW = (name, s) => (GLYPHS[name].xMax - GLYPHS[name].xMin) * (s / 250);
 
 // Guitar Pro–style spacing: every note/chord gets an even slot (ASCII column offsets are ignored),
 // barlines get a narrower slot, and full lines are justified to the page width.
-const EV_W = 26, BAR_W = 16, LEAD = 14, TAIL = 10;
-function layoutSystems(model, avail) {
+const BAR_W = 16, LEAD = 14, TAIL = 10;
+function layoutSystems(model, avail, EV_W = 26) {
   const items = [
     ...model.bars.map((col) => ({ kind: 'bar', col })),
     ...model.events.map((e) => ({ kind: 'ev', col: e.col, e })),
@@ -128,7 +129,7 @@ function bendLabel(b) {
   return { 1: '½', 2: 'full', 3: '1½', 4: '2' }[b] ?? `${b / 2}`;
 }
 
-function System({ model, sys, showNotation, isFinal, measureStart, showMeasureNumbers }) {
+function System({ model, sys, showNotation, isFinal, measureStart, showMeasureNumbers, tech }) {
   const s = 8;          // staff space
   const t = 13;         // tab line gap
   const L = 2;
@@ -149,7 +150,9 @@ function System({ model, sys, showNotation, isFinal, measureStart, showMeasureNu
   const hasArc = events.some((e) => e.notes.some((n) => n.leg || n.vib));
   const hasBendVib = events.some((e) => e.notes.some((n) => n.bend && n.vib));
 
-  const y0 = 14;
+  const strokesHere = tech?.strokes && events.some((e) => tech.strokes.has(e.col));
+  const strokeBase = 16;            // baseline of the pick-stroke row (glyphs sit above it)
+  const y0 = strokesHere ? strokeBase + 10 : 14;
   let staffTop = 0, staffBot = 0, cursor = y0;
   if (showNotation) {
     staffTop = y0 + Math.max(s * 1.2, Math.max(0, maxStep - 38) * (s / 2) + s * 0.6);
@@ -292,17 +295,29 @@ function System({ model, sys, showNotation, isFinal, measureStart, showMeasureNu
       const w = label.length * 6.6 + 3;
       els.push(<rect key={k(`fb${e.col}-${n.string}`)} x={x - w / 2} y={y - 6.5} width={w} height={13} fill={PAPER.bg} />);
       els.push(<text key={k(`fn${e.col}-${n.string}`)} x={x} y={y + 0.5} fill={PAPER.ink} fontFamily={NUMFONT} fontSize={12} textAnchor="middle" dominantBaseline="central">{label}</text>);
+      const fing = tech?.fingers?.get(`${e.col}:${n.string}`);
+      if (fing) els.push(<text key={k(`ft${e.col}-${n.string}`)} x={x + w / 2 - 0.5} y={y - 4} fill={PAPER.red} fontFamily={NUMFONT} fontSize={8.5} fontWeight={700}>{fing}</text>);
+    }
+  }
+
+  // Pick strokes (Guitar Pro: ⊓ downstroke, V upstroke) in a row above the system
+  if (strokesHere) {
+    for (const e of events) {
+      const d = tech.strokes.get(e.col);
+      if (!d) continue;
+      const name = d === 'd' ? 'stringsDownBow' : 'stringsUpBow';
+      els.push(<Glyph key={k(`pk${e.col}`)} name={name} x={X(e.col) - glyphW(name, s) / 2} y={strokeBase} s={s} />);
     }
   }
 
   return <svg width={Math.ceil(endX + 4)} height={H} style={{ display: 'block', overflow: 'visible' }}>{els}</svg>;
 }
 
-function TabSegment({ model, avail, showNotation }) {
+function TabSegment({ model, avail, showNotation, tech }) {
   const systems = useMemo(() => {
     const flats = prefersFlats(model);
-    return layoutSystems(model, Math.max(160, avail - 44)).map((sy) => ({ ...sy, flats }));
-  }, [model, avail]);
+    return layoutSystems(model, Math.max(160, avail - 44), tech?.fingers?.size ? 28 : 26).map((sy) => ({ ...sy, flats }));
+  }, [model, avail, tech, showNotation]);
   const measureCount = model.bars.filter((b) => b !== model.cols - 1).length + 1;
   const showNums = measureCount >= 2;
   let m = 1;
@@ -311,7 +326,7 @@ function TabSegment({ model, avail, showNotation }) {
       {systems.map((sy, i) => {
         const startNo = m;
         m += sy.innerBars.filter((b) => b.col !== model.cols - 1).length + (i < systems.length - 1 && !sy.innerBars.length ? 0 : 0);
-        return <System key={i} model={model} sys={sy} showNotation={showNotation} isFinal={i === systems.length - 1} measureStart={startNo} showMeasureNumbers={showNums} />;
+        return <System key={i} model={model} sys={sy} tech={tech} showNotation={showNotation} isFinal={i === systems.length - 1} measureStart={startNo} showMeasureNumbers={showNums} />;
       })}
       {model.annotations?.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2, paddingLeft: 36 }}>
@@ -327,11 +342,24 @@ function TabSegment({ model, avail, showNotation }) {
 }
 
 // lines: lesson/Woodshed tab text. model: prebuilt score model. assumeTab: lines are raw tab rows (Woodshed chunks).
-export default function TabScore({ lines, model, tempo, title, subtitle, assumeTab = false, compact = false, notation }) {
+// context: exercise name/description, used to pick the picking style (alternate / economy / sweep)
+export default function TabScore({ lines, model, tempo, title, subtitle, assumeTab = false, compact = false, notation, context = '' }) {
   const st = useStore();
   const showNotation = notation ?? (st?.settings?.showNotation ?? true);
+  const showPicking = st?.settings?.showPicking ?? true;
+  const showFingering = st?.settings?.showFingering ?? true;
   const [ref, width] = useWidth();
-  const segments = useMemo(() => (model ? [{ type: 'tab', model }] : splitTabText(lines || [], { assumeTab })), [lines, model, assumeTab]);
+  const segments = useMemo(() => {
+    const segs = model ? [{ type: 'tab', model }] : splitTabText(lines || [], { assumeTab });
+    const style = pickingStyle(context);
+    return segs.map((seg, i) => {
+      if (seg.type !== 'tab') return seg;
+      const prev = segs[i - 1];
+      const rule = prev?.type === 'text' ? strokeRuleFromText(prev.lines.slice(-2)) : null;
+      return { ...seg, tech: annotateTechnique(seg.model, { style, rule }) };
+    });
+  }, [lines, model, assumeTab, context]);
+  const techFor = (seg) => (seg.tech ? { strokes: showPicking ? seg.tech.strokes : null, fingers: showFingering ? seg.tech.fingers : null } : null);
 
   return (
     <div style={{ background: PAPER.bg, color: PAPER.ink, borderRadius: 3, boxShadow: PAPER.shadow, padding: compact ? '10px 14px 8px' : '16px 22px 14px' }}>
@@ -348,7 +376,7 @@ export default function TabScore({ lines, model, tempo, title, subtitle, assumeT
       )}
       <div ref={ref} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {width > 0 && segments.map((seg, i) => (seg.type === 'tab' ? (
-          <TabSegment key={i} model={seg.model} avail={width} showNotation={showNotation} />
+          <TabSegment key={i} model={seg.model} avail={width} showNotation={showNotation} tech={techFor(seg)} />
         ) : (
           <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
             {seg.lines.map((l, j) => (l.trim() === '' ? <div key={j} style={{ height: 6 }} /> : /\S\s{2,}\S|\|/.test(l.trim()) ? (

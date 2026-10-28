@@ -52,6 +52,8 @@ export default function Session({ go }) {
   // Match the click to how the current exercise is counted (quarters, 1-&, 1-e-&-a, triplets)
   const curEx = blocks[activeBlockIndex]?.exercises?.[activeExerciseIndex];
   useEffect(() => { metronome.setSubdivision(detectSubdivision(curEx)); }, [curEx?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Theory and Checkpoint have no metronome controls, so the click can't be left running there
+  useEffect(() => { if (!blocks[activeBlockIndex]?.exercises?.length) metronome.stop(); }, [activeBlockIndex]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const isBlockLocked = (i) => i !== 0 && !completedBlocks.has(i - 1);
 
@@ -188,7 +190,7 @@ export default function Session({ go }) {
             <button className="fl-link" onClick={timer.reset} style={{ ...mono(9), color: T.textMuted }}>RESET</button>
           </div>
         </div>
-        {activeBlockIndex < 3 && (
+        {block?.exercises?.length > 0 && (
           <div style={{ ...card, display: 'flex', flexDirection: 'column', gap: 14, padding: 18 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1 }}>
@@ -326,7 +328,7 @@ function ExerciseDetail({ ex, m }) {
           {ex.fretboardDiagrams.map((d, i) => <FretboardView key={i} diagram={d} />)}
         </div>
       )}
-      {ex.tabNotation && <TabScore lines={ex.tabNotation.lines} tempo={ex.tabNotation.tempo} />}
+      {ex.tabNotation && <TabScore lines={ex.tabNotation.lines} tempo={ex.tabNotation.tempo} context={`${ex.name} ${ex.description}`} />}
       {ex.tips.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: 12, background: T.yellowSoft, borderRadius: 10, border: `1px solid ${alpha(T.yellow, 0.15)}` }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, ...mono(10, 700), color: T.yellow, letterSpacing: 1 }}>
