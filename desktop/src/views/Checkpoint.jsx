@@ -120,6 +120,10 @@ function Results({ st, g, questions, score, go, onReset }) {
   const schedule = st.reviewSchedule().slice(0, 5);
   const routineId = st.currentRoutine?.id;
   const isLast = routineId === 'a-w10';
+  // A week is 7 practice days; only the Day 7 checkpoint can master it and move you on
+  const day = Math.min((st.progressFor(routineId)?.completedDays || 0) + 1, 7);
+  const finalDay = day >= 7;
+  const weekPassed = passed && finalDay;
 
   // Real XP for this checkpoint (awarded once when the results appear)
   const [gains, setGains] = useState([]);
@@ -132,14 +136,18 @@ function Results({ st, g, questions, score, go, onReset }) {
     list.push(['Checkpoint complete', g.earn(XP.checkpoint, 'Checkpoint complete')]);
     g.bump('checkpoints');
     if (pct === 100) { list.push(['Perfect score', g.earn(XP.perfect, 'Perfect score!')]); g.bump('perfect'); }
-    if (passed && routineId && !st.isRoutineMastered(routineId)) {
+    if (weekPassed && routineId && !st.isRoutineMastered(routineId)) {
       const x = g.earn(XP.mastered, `Week ${st.currentRoutine.weekNumber} mastered`, { once: `master:${routineId}` });
       if (x) list.push(['Week mastered', x]);
     }
     setGains(list.filter(([, x]) => x > 0));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const total = gains.reduce((sum, [, x]) => sum + x, 0);
-  const message = pct === 100 ? 'Flawless! You nailed every question.'
+  const message = !finalDay
+    ? (pct === 100 ? `Flawless! Day ${day} of 7 complete — come back tomorrow for Day ${day + 1}.`
+      : passed ? `Day ${day} of 7 complete. Come back tomorrow for Day ${day + 1}.`
+      : `Day ${day} of 7 complete. Review the theory block before tomorrow — you need 75% on Day 7 to unlock next week.`)
+    : pct === 100 ? 'Flawless! You nailed every question — that unlocks next week.'
     : passed ? (isLast ? 'You passed the final checkpoint of the whole curriculum. Incredible work.' : 'Great job — that unlocks next week.')
     : pct >= 50 ? 'So close! You need 75% to unlock next week. Review the theory block and try again.'
     : 'Every rep counts. Revisit the lesson and give it another go — you\'ve got this.';
@@ -148,7 +156,7 @@ function Results({ st, g, questions, score, go, onReset }) {
     if (routineId) {
       const s = score / Math.max(1, questions.length);
       st.completePracticeDay(routineId, s);
-      if (st.completeRoutineMastery(routineId, s) && !isLast) st.advanceToNextRoutine();
+      if (finalDay && st.completeRoutineMastery(routineId, s) && !isLast) st.advanceToNextRoutine();
     }
     onReset();
     go('home');
@@ -168,7 +176,7 @@ function Results({ st, g, questions, score, go, onReset }) {
             <span key={label} style={{ ...mono(11, 600), color: T.yellow, background: T.yellowSoft, padding: '5px 10px', borderRadius: 999 }}>{label} +{x} XP</span>
           ))}
         </div>
-        {passed && !isLast && (
+        {weekPassed && !isLast && (
           <div style={{ ...sys(12), color: T.textSecondary, textAlign: 'center', padding: '0 30px' }}>Next week unlocked — it becomes your session when you tap Done.</div>
         )}
         <div style={{ alignSelf: 'stretch', margin: '0 20px', padding: 14, background: T.card, borderRadius: 12, border: `1px solid ${T.border}`, display: 'flex', flexDirection: 'column', gap: 8 }}>

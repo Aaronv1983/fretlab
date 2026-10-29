@@ -53,15 +53,43 @@ function initialStreak() {
   return daysBetween(last, Date.now()) > 1 ? 0 : streak;
 }
 
+// One-time repair (1.2.5): earlier desktop builds marked a week mastered — and moved on — after a single
+// day's checkpoint. A week is 7 days, so un-master weeks with fewer than 7 days done and return to the
+// earliest unfinished week. Unlocks, XP and achievements are kept.
+const WEEKFIX_KEY = 'fretlab_weekfix_125';
+function initialCurriculumState() {
+  let progress = load(KEYS.progress, {});
+  let current = load(KEYS.currentRoutine, null);
+  if (!routineById(current)) current = COURSES[0].routines[0].id;
+  let done = false;
+  try { done = localStorage.getItem(WEEKFIX_KEY) === '1'; } catch { /* storage unavailable */ }
+  if (!done) {
+    const fixed = { ...progress };
+    let changed = false;
+    for (const [id, p] of Object.entries(fixed)) {
+      if (p?.isMastered && (p.completedDays || 0) < 7) { fixed[id] = { ...p, isMastered: false }; changed = true; }
+    }
+    if (changed) {
+      progress = fixed;
+      const curIdx = ALL_ROUTINES.findIndex((r) => r.id === current);
+      const firstOpen = ALL_ROUTINES.findIndex((r) => !fixed[r.id]?.isMastered);
+      if (firstOpen >= 0 && firstOpen < curIdx) current = ALL_ROUTINES[firstOpen].id;
+      save(KEYS.progress, progress);
+      save(KEYS.currentRoutine, current);
+    }
+    try { localStorage.setItem(WEEKFIX_KEY, '1'); } catch { /* storage unavailable */ }
+  }
+  return { progress, current };
+}
+
 export function StoreProvider({ children }) {
+  const init = useRef(null);
+  if (!init.current) init.current = initialCurriculumState();
   // ── Curriculum ──
-  const [currentRoutineId, setCurrentRoutineId] = useState(() => {
-    const id = load(KEYS.currentRoutine, null);
-    return routineById(id) ? id : COURSES[0].routines[0].id;
-  });
+  const [currentRoutineId, setCurrentRoutineId] = useState(() => init.current.current);
 
   // ── Progress ──
-  const [routineProgress, setRoutineProgress] = useState(() => load(KEYS.progress, {}));
+  const [routineProgress, setRoutineProgress] = useState(() => init.current.progress);
   const [skills, setSkills] = useState(() => {
     const saved = load(KEYS.skills, {});
     const out = {};
